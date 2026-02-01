@@ -75,27 +75,42 @@ import { ref, computed, onMounted } from 'vue'
 import { type IWorkOrder } from '@/types/WorkOrder'
 // 核心：导入你的创建器组件
 import WorkOrderCreator from './WorkOrderCreator.vue'
+import { findWorkOrdersByClerk } from '@/stores/request'
 
 const showCreator = ref(false)
 const searchQuery = ref<string>('')
+const workOrders = ref<IWorkOrder[]>([])
 
+//onMounted 会在组件加载完成、渲染到页面上时自动运行。
 onMounted(async () => {
-  console.log('订单上传页面初始化...')
-
-  try {
-    // 向后端请求该页面专属的数据
-    // const res = await request.get('/orders/list')
-    // orders.value = res.data
-  } catch (err) {
-    console.error('获取列表失败', err)
-  }
+  console.log('订单上传页面初始化，正在获取 admin 的订单列表...')
+  await fetchOrdersData()
 })
+
+/**
+ * 获取订单列表的逻辑封装
+ */
+const fetchOrdersData = async () => {
+  try {
+    // 调用你在 request.ts 里写的函数，扒拉 admin 的数据
+    const data = await findWorkOrdersByClerk('admin')
+
+    // 将拿到的数组赋值给响应式变量 orders
+    // processedOrders 会根据这个数据的变化自动重新计算过滤和排序
+    workOrders.value = data
+
+    console.log('订单加载成功:', data.length, '条记录')
+  } catch (err) {
+    console.error('获取列表失败:', err)
+    // 实际项目中这里可以加个通知提示
+  }
+}
+
 type SortKey = keyof IWorkOrder
 const sortConfig = ref<{ key: SortKey; order: 'asc' | 'desc' }>({
   key: 'zhiDanShiJian',
   order: 'desc',
 })
-const workOrders = ref<IWorkOrder[]>([])
 
 // 搜索过滤与排序逻辑
 const processedOrders = computed(() => {

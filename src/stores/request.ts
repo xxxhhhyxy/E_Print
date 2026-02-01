@@ -1,3 +1,5 @@
+import type { IOrder } from '@/types/Order'
+import type { IWorkOrder } from '@/types/WorkOrder'
 import axios from 'axios'
 
 // 1. 创建实例
@@ -28,5 +30,31 @@ service.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+/**
+ * 通过业务员姓名获取订单列表
+ * @param salesName 业务员名字
+ */
+export const findOrdersBySales = (salesName: string): Promise<IOrder[]> => {
+  return service.get('/orders/findBySales', {
+    params: { sales: salesName }, // 后端接收 string 的参数名
+  })
+}
+
+export const findOrdersByAudit = (auditName: string): Promise<IOrder[]> => {
+  return service.get('/orders/findByAudit', {
+    params: { audit: auditName }, // 后端接收 string 的参数名
+  })
+}
+export const findWorkOrdersByClerk = (clerkName: string): Promise<IWorkOrder[]> => {
+  return service.get('/workOrders/findByClerk', {
+    params: { sales: clerkName }, // 后端接收 string 的参数名
+  })
+}
+export const findWorkOrdersByAudit = (auditName: string): Promise<IWorkOrder[]> => {
+  return service.get('/workOrders/findByAudit', {
+    params: { audit: auditName }, // 后端接收 string 的参数名
+  })
+}
 
 export default service

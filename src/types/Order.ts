@@ -2,6 +2,7 @@ export interface IOrder {
   // 必填字段
   order_id?: string //订单号
   order_ver?: string //订单版本
+  order_unique?: string //唯一索引，在提交order报审核的时候创建，是order_id+"_"+order_ver.
   customer: string // 客户名称: 创建草稿时唯一需要明确的，这样就可以开始保存草稿了
   sales: string //业务员名称或者工号
   audit?: string //审单员名称或者工号

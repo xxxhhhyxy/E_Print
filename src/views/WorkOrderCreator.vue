@@ -169,7 +169,7 @@
 
 <script setup lang="ts">
 import { reactive } from 'vue'
-import { type IWorkOrder, OrderStatus, prepareWorkOrderForSubmit } from '@/types/WorkOrder'
+import { type IWorkOrder, WorkOrderStatus, prepareWorkOrderForSubmit } from '@/types/WorkOrder'
 import service from '@/stores/request'
 
 const emit = defineEmits(['close', 'submit'])
@@ -177,7 +177,7 @@ const emit = defineEmits(['close', 'submit'])
 const workOrder = reactive<Partial<IWorkOrder> & { zhiDanYuan: string }>({
   zhiDanYuan: '',
   work_ver: '1.0',
-  orderStatus: OrderStatus.DRAFT,
+  workorderstatus: WorkOrderStatus.DRAFT,
   intermedia: [{}],
 })
 

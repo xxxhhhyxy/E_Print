@@ -1,7 +1,8 @@
 export interface IWorkOrder {
-  work_id: string //工程单号
-  work_ver: string //版本号
-  work_clerk: string //制单员名称或者工号
+  work_id: string //工程单号，order审核通过的时候自动创建,order_id+"_W"
+  work_ver: string //版本号，order审核通过的时候自动创建,和order_ver相同
+  work_unique: string //唯一索引，order审核通过的时候自动创建，work_id+"_"+work_ver
+  work_clerk?: string //制单员名称或者工号
   work_audit?: string //工程单审核员名称或者工号
   gongDanLeiXing?: string //工单类型
   caiLiao?: string //普通材料
@@ -19,16 +20,16 @@ export interface IWorkOrder {
   benChangFangSun?: string //本厂放损
   chuYangRiqiRequired?: string //出样日期要求
   chuHuoRiqiRequired?: string //出货日期要求
-  orderStatus: OrderStatus
   intermedia: IIM[] //中间物料详单
 
   //表格上没有的
-  orderstatus: OrderStatus //订单状态
+  workorderstatus: WorkOrderStatus //订单状态
   auditLogs?: IAuditLog[] // 审批日志：记录“单子是怎么过的” (用于查看审核记录), OrderState不是Audit的时候不再更新
   attachments?: IAttachment[] //创建订单时上传的附件
 }
 
-export enum OrderStatus {
+export enum WorkOrderStatus {
+  TBD = '未创建',
   DRAFT = '草稿',
   PENDING_REVIEW = '待审核',
   APPROVED = '通过',
@@ -56,6 +57,11 @@ export interface IIM {
   yinShuaBanShu?: number //印刷版数目
   shengChanLuJing?: string //生产路径
   paiBanFangShi?: string //排版方式
+
+  //表格上没有的
+  kaiShiRiQi?: string //工序开始日期
+  yuQiJieShu?: string //工序预期结束日期
+  dangQianJinDu?: string //工序当前进度，由技工手动输入
 }
 
 /** 附件条目接口 */
@@ -109,7 +115,7 @@ export function initializeAuditLog(orderData: Partial<IWorkOrder>, operatorName:
   }
   orderData.auditLogs = orderData.auditLogs || []
   orderData.auditLogs.push(firstLog)
-  orderData.orderstatus = OrderStatus.PENDING_REVIEW
+  orderData.workorderstatus = WorkOrderStatus.PENDING_REVIEW
 }
 
 /**

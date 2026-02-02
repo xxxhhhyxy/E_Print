@@ -23,8 +23,8 @@
         <table class="modern-table">
           <thead>
             <tr>
-              <th width="150" @click="handleSort('orderStatus')" class="sortable">
-                状态码 {{ getSortIcon('orderStatus') }}
+              <th width="150" @click="handleSort('workorderstatus')" class="sortable">
+                状态码 {{ getSortIcon('workorderstatus') }}
               </th>
               <th width="180" @click="handleSort('zhiDanShiJian')" class="sortable">
                 制单时间 {{ getSortIcon('zhiDanShiJian') }}
@@ -44,8 +44,8 @@
           <tbody>
             <tr v-for="work in processedOrders" :key="work.work_id + work.work_ver">
               <td>
-                <span :class="['status-badge', work.orderStatus]">
-                  {{ work.orderStatus }}
+                <span :class="['status-badge', work.workorderstatus]">
+                  {{ work.workorderstatus }}
                 </span>
               </td>
               <td class="time-text">{{ work.zhiDanShiJian }}</td>

@@ -2,30 +2,22 @@
   <div class="creator-wrapper">
     <div class="top-nav">
       <div class="left-panel">
-        <!-- <div class="staff-info">
-          <span class="label">制单员：</span>
-          <input v-model="WorkOrderData.work_clerk" type="text" class="underline-input" />
-        </div> -->
-
         <div class="attachment-manager">
           <div class="manager-header">
             <span class="label">相关附件</span>
             <button class="add-file-btn" @click="addFileRow">+ 添加文件</button>
           </div>
-
           <table class="standard-table mini-table" v-if="WorkOrderData.attachments?.length">
             <thead>
               <tr class="bg-gray">
                 <th width="100">分类</th>
-                <th>文件名 (点击按钮选择)</th>
+                <th>文件名</th>
                 <th width="40">操作</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(attr, idx) in WorkOrderData.attachments" :key="idx">
-                <td>
-                  <input v-model="attr.category" placeholder="类型" class="cell-input" />
-                </td>
+                <td><input v-model="attr.category" placeholder="类型" class="cell-input" /></td>
                 <td class="file-cell">
                   <div class="file-trigger-wrapper">
                     <input
@@ -50,7 +42,6 @@
           </table>
         </div>
       </div>
-
       <div class="button-group">
         <button class="btn btn-secondary" @click="$emit('close')">返回列表</button>
         <button class="btn btn-primary" @click="handleSubmitOrder">提交工单</button>
@@ -105,92 +96,98 @@
           </tbody>
         </table>
       </fieldset>
+
       <div class="table-scroll-container">
-        <fieldset :disabled="props.mode !== PageMode.EDIT">
-          <table class="standard-table">
-            <thead>
-              <tr class="bg-gray">
-                <th>序号</th>
-                <th>部件名称</th>
-                <th>印刷颜色</th>
-                <th>物料名称</th>
-                <th>品牌</th>
-                <th>规格</th>
-                <th>FSC</th>
-                <th>开数</th>
-                <th>上机尺寸</th>
-                <th>排版模数</th>
-                <th>印出数</th>
-                <th>印损</th>
-                <th>领料数</th>
-                <th>表面处理</th>
-                <th>印刷板数</th>
-                <th>生产路径</th>
-                <th>排版方式</th>
-                <th width="40">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, index) in WorkOrderData.intermedia" :key="index">
-                <td class="align-center">{{ index + 1 }}</td>
+        <table class="standard-table process-table">
+          <thead>
+            <tr class="bg-gray">
+              <th width="40">序号</th>
+              <th>部件名称</th>
+              <th>印刷颜色</th>
+              <th>物料名称</th>
+              <th>品牌</th>
+              <th>规格</th>
+              <th>FSC</th>
+              <th>开数</th>
+              <th>上机尺寸</th>
+              <th>排版模数</th>
+              <th>印出数</th>
+              <th>印损</th>
+              <th>领料数</th>
+              <th>表面处理</th>
+              <th>印刷板数</th>
+              <th>生产路径</th>
+              <th>排版方式</th>
+              <th width="40">操作</th>
+            </tr>
+          </thead>
 
-                <td><input v-model="item.buJianMingCheng" /></td>
-                <td><input v-model="item.yinShuaYanSe" /></td>
-                <td><input v-model="item.wuLiaoMingCheng" /></td>
-                <td><input v-model="item.pinPai" /></td>
-                <td><input v-model="item.caiLiaoGuiGe" /></td>
-                <td><input v-model="item.FSC" /></td>
-                <td><input v-model.number="item.kaiShu" type="number" /></td>
-                <td><input v-model="item.shangJiChiCun" /></td>
-                <td><input v-model.number="item.paiBanMuShu" type="number" /></td>
-                <td><input v-model.number="item.yinChuShu" type="number" /></td>
-                <td><input v-model.number="item.yinSun" type="number" /></td>
-                <td><input v-model.number="item.lingLiaoShu" type="number" /></td>
-                <td><input v-model="item.biaoMianChuLi" /></td>
-                <td><input v-model.number="item.yinShuaBanShu" type="number" /></td>
-                <td><input v-model="item.shengChanLuJing" /></td>
-                <td><input v-model="item.paiBanFangShi" /></td>
+          <tbody
+            v-for="(item, index) in WorkOrderData.intermedia"
+            :key="index"
+            class="process-body"
+          >
+            <tr class="main-params-row">
+              <td class="align-center bg-index">{{ index + 1 }}</td>
+              <td><input v-model="item.buJianMingCheng" /></td>
+              <td><input v-model="item.yinShuaYanSe" /></td>
+              <td><input v-model="item.wuLiaoMingCheng" /></td>
+              <td><input v-model="item.pinPai" /></td>
+              <td><input v-model="item.caiLiaoGuiGe" /></td>
+              <td><input v-model="item.FSC" /></td>
+              <td><input v-model.number="item.kaiShu" type="number" /></td>
+              <td><input v-model="item.shangJiChiCun" /></td>
+              <td><input v-model.number="item.paiBanMuShu" type="number" /></td>
+              <td><input v-model.number="item.yinChuShu" type="number" /></td>
+              <td><input v-model.number="item.yinSun" type="number" /></td>
+              <td><input v-model.number="item.lingLiaoShu" type="number" /></td>
+              <td><input v-model="item.biaoMianChuLi" /></td>
+              <td><input v-model.number="item.yinShuaBanShu" type="number" /></td>
+              <td><input v-model="item.shengChanLuJing" /></td>
+              <td><input v-model="item.paiBanFangShi" /></td>
+              <td class="align-center">
+                <button class="remove-btn" @click="removeRow(index)">×</button>
+              </td>
+            </tr>
 
-                <td class="align-center">
-                  <button class="remove-btn" @click="removeRow(index)" title="删除此行">×</button>
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="18" class="add-row-container">
-                  <button class="add-row-full-btn" @click="addNewRow">+ 点击添加新的物料行</button>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+            <tr class="extra-detail-row">
+              <td colspan="18">
+                <fieldset :disabled="props.mode === PageMode.VIEW" class="detail-fieldset">
+                  <td>开始日期</td>
+                  <td>当前进度</td>
+                  <td>预计结束</td>
+                </fieldset>
+              </td>
+            </tr>
+          </tbody>
+
+          <tfoot>
+            <tr>
+              <td colspan="18" class="add-row-container">
+                <button class="add-row-full-btn" @click="addNewRow">+ 增加一道生产工序模块</button>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="audit-info-footer">
+        <div class="auditlog-related">
+          <td>制单员:</td>
+          <td><input v-model="WorkOrderData.work_clerk" class="cell-input" /></td>
+          <td>时间：</td>
+          <td><input type="date" v-model="WorkOrderData.zhiDanShiJian" class="cell-input" /></td>
+        </div>
+        <fieldset :disabled="props.mode !== PageMode.REVIEW" class="auditlog-related">
+          <td>审核员:</td>
+          <td><input v-model="WorkOrderData.work_audit" class="cell-input" /></td>
+          <td>时间：</td>
+          <td><input type="date" class="cell-input" /></td>
         </fieldset>
       </div>
-
-      <div class="auditlog-related">
-        <td>制单员:</td>
-        <td><input v-model="WorkOrderData.work_clerk" class="cell-input" /></td>
-        <td>时间：</td>
-        <td><input type="date" v-model="WorkOrderData.zhiDanShiJian" class="cell-input" /></td>
-      </div>
-      <fieldset :disabled="props.mode !== PageMode.REVIEW" class="auditlog-related">
-        <td>审核员:</td>
-        <td><input v-model="WorkOrderData.work_audit" class="cell-input" /></td>
-        <td>时间：</td>
-        <td><input type="date" class="cell-input" /></td>
-      </fieldset>
     </section>
   </div>
 </template>
-
-<!-- <script setup>
-export enum WorkOrderPageMode {
-  CLERK = '制单',
-  VIEW = '查看',
-  AUDIT = '审核',
-  PROCESS = '工序',
-}
-</script> -->
 
 <script lang="ts">
 export enum PageMode {
@@ -200,6 +197,7 @@ export enum PageMode {
   PRODUCTION = 'production',
 }
 </script>
+
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import {
@@ -210,212 +208,121 @@ import {
   prepareWorkOrderForSubmit,
 } from '@/types/WorkOrder'
 
-// const M_PageMode = ref<WorkOrderPageMode>(WorkOrderPageMode.CLERK)
-
 const emit = defineEmits(['close', 'submit'])
-
 const props = defineProps<{
   mode: PageMode
-  initialData?: IWorkOrder | null // 必须加上这一行！
+  initialData?: IWorkOrder | null
 }>()
 
-/**
- * 创建一个完整的、带有默认初始值的工单对象
- */
+const createEmptyProcess = () => ({
+  buJianMingCheng: '',
+  yinShuaYanSe: '',
+  wuLiaoMingCheng: '',
+  pinPai: '',
+  caiLiaoGuiGe: '',
+  FSC: '',
+  kaiShu: undefined,
+  shangJiChiCun: '',
+  paiBanMuShu: undefined,
+  yinChuShu: undefined,
+  yinSun: undefined,
+  lingLiaoShu: undefined,
+  biaoMianChuLi: '',
+  yinShuaBanShu: undefined,
+  shengChanLuJing: '',
+  paiBanFangShi: '',
+  dangQianJinDu: '待产',
+  // 扩展字段
+  memo: '',
+  qcRequest: '',
+  packWay: '',
+  isLocked: false,
+})
+
 const createEmptyWorkOrder = (): Partial<IWorkOrder> => ({
   work_id: '',
   work_ver: '1.0',
-  work_unique: '',
   work_clerk: '',
   work_audit: '',
   gongDanLeiXing: '',
   caiLiao: '',
-  chanPinLeiXing: '',
-  zhiDanShiJian: formatYMD(new Date()), // 默认今天，格式 yyyy-mm-dd
+  zhiDanShiJian: formatYMD(new Date()),
   customer: '',
-  customerPO: '',
   productName: '',
-  chanPinGuiGe: '',
-
-  // 数值类型默认给 0 或 undefined (根据你输入框的需求)
-  dingDanShuLiang: 0,
-  chuYangShuLiang: 0,
-  chaoBiLiShuLiang: 0,
-  benChangFangSun: '',
-  chuYangRiqiRequired: '',
-  chuHuoRiqiRequired: '',
-
-  // 直接在这里写死第一行物料的默认值
-  intermedia: [
-    {
-      buJianMingCheng: '',
-      yinShuaYanSe: '',
-      wuLiaoMingCheng: '',
-      pinPai: '',
-      caiLiaoGuiGe: '',
-      FSC: '',
-      kaiShu: undefined,
-      shangJiChiCun: '',
-      paiBanMuShu: undefined,
-      yinChuShu: undefined,
-      yinSun: undefined,
-      lingLiaoShu: undefined,
-      biaoMianChuLi: '',
-      yinShuaBanShu: undefined,
-      shengChanLuJing: '',
-      paiBanFangShi: '',
-      dangQianJinDu: '未开始',
-    },
-  ],
-
+  intermedia: [createEmptyProcess()],
   workorderstatus: WorkOrderStatus.DRAFT,
-  auditLogs: [],
   attachments: [],
 })
 
 const WorkOrderData = reactive<IWorkOrder>(createEmptyWorkOrder() as IWorkOrder)
 
-// 3. 彻底重写的重置函数
 const resetToDefault = () => {
-  console.log('--- 🧹 正在执行全量重置 ---')
   const empty = createEmptyWorkOrder()
   Object.assign(WorkOrderData, empty)
-  // 额外手动处理一下明细数组，确保引用彻底刷新
-  WorkOrderData.intermedia = [...(empty.intermedia || [])]
-  WorkOrderData.attachments = []
+  WorkOrderData.intermedia = [createEmptyProcess()]
 }
+
 watch(
   () => props.initialData,
   (newVal) => {
     if (newVal) {
-      console.log('--- 🚀 开始填充数据 ---')
-
-      // 1. 克隆数据
-      const rawData = JSON.parse(JSON.stringify(newVal)) as IWorkOrder
-
-      // 2. 直接遍历赋值，不使用 hasOwnProperty 检查
-      ;(Object.keys(rawData) as Array<keyof IWorkOrder>).forEach((key) => {
-        try {
-          const k = key as keyof IWorkOrder
-          // 打印每一个字段的读取情况，方便寻找“醉酒”
-          console.log(`[读取] 字段: ${String(k).padEnd(25)} | 值:`, rawData[k])
-          // 直接赋值，确保 orderData 接收到数据
-          ;(WorkOrderData as Record<keyof IWorkOrder, unknown>)[k] = rawData[k]
-        } catch (err) {
-          console.error(`❌ 填充字段 [${key}] 失败:`, err)
-        }
-      })
-
-      // 3. 处理独立字段
-      //salesman.value = rawData.sales || 'admin'
+      Object.assign(WorkOrderData, JSON.parse(JSON.stringify(newVal)))
     } else {
       resetToDefault()
-      //salesman.value = 'admin'
     }
   },
   { immediate: true, deep: true },
 )
 
-// 删除行逻辑
 const removeRow = (index: number) => {
   if (WorkOrderData.intermedia && WorkOrderData.intermedia.length > 1) {
     WorkOrderData.intermedia.splice(index, 1)
-  } else {
-    alert('至少保留一行物料数据')
   }
 }
 
-// 确保 addNewRow 包含你新增的字段
 const addNewRow = () => {
-  WorkOrderData.intermedia?.push({})
+  WorkOrderData.intermedia?.push(createEmptyProcess())
 }
-// 添加一个空的附件行
+
 const addFileRow = () => {
   if (!WorkOrderData.attachments) WorkOrderData.attachments = []
-  WorkOrderData.attachments.push({
-    category: '',
-    fileName: '',
-    file: undefined,
-  })
+  WorkOrderData.attachments.push({ category: '', fileName: '', file: undefined })
 }
 
-// 触发特定行的文件选择
 const triggerRowFile = (index: number) => {
-  const el = document.getElementById(`file-input-${index}`) as HTMLInputElement
-  el?.click()
+  document.getElementById(`file-input-${index}`)?.click()
 }
 
-// 处理文件选择并绑定到该行
 const onFileSelected = (e: Event, index: number) => {
   const target = e.target as HTMLInputElement
-
-  // 1. 确保有文件被选中
-  if (target.files && target.files[0]) {
-    const file = target.files[0]
-
-    // 2. 检查数组是否存在，且该索引位置的对象也存在
-    const attachment = WorkOrderData.attachments?.[index]
-
-    if (attachment) {
-      attachment.file = file
-      attachment.fileName = file.name
-    }
+  if (target.files?.[0] && WorkOrderData.attachments?.[index]) {
+    WorkOrderData.attachments[index].fileName = target.files[0].name
+    WorkOrderData.attachments[index].file = target.files[0]
   }
 }
+
 const handleSubmitOrder = async () => {
-  // 基础校验
-  if (!WorkOrderData.customer || !WorkOrderData.productName) {
-    alert('请填写必要信息')
-    return
-  }
-
-  try {
-    const finalPayload = JSON.parse(JSON.stringify(WorkOrderData)) as IWorkOrder
-
-    console.log(
-      '%c--- 📤 提交数据全字段预览 ---',
-      'background: #2563eb; color: #fff; padding: 4px 8px; border-radius: 4px;',
-    )
-
-    // 打印一个表格，清晰查看所有字段
-    const allKeys = Object.keys(finalPayload).sort() as Array<keyof IWorkOrder>
-    console.table(
-      allKeys.map((key) => ({
-        字段名: key,
-        提交值: finalPayload[key],
-        类型: typeof finalPayload[key],
-      })),
-    )
-    //定义唯一索引
-    WorkOrderData.work_unique = WorkOrderData.work_id + '_' + WorkOrderData.work_ver
-    // 依然在子组件完成日志初始化和数据封装，因为子组件最清楚表单结构
-    initializeAuditLog(WorkOrderData)
-    const fd = prepareWorkOrderForSubmit(WorkOrderData)
-
-    // 发射给父组件
-    emit('submit', fd)
-  } catch (err) {
-    console.error('数据准备失败', err)
-  }
+  if (!WorkOrderData.customer) return alert('请填写客户')
+  WorkOrderData.work_unique = WorkOrderData.work_id + '_' + WorkOrderData.work_ver
+  initializeAuditLog(WorkOrderData)
+  emit('submit', prepareWorkOrderForSubmit(WorkOrderData))
 }
 </script>
 
 <style scoped>
-/* 核心：标准框线表格 */
+/* 核心表格基础 */
 .standard-table {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid #000;
   font-size: 12px;
 }
-
 .standard-table th,
 .standard-table td {
   border: 1px solid #000;
   height: 32px;
   padding: 0;
 }
-
 .standard-table input,
 .standard-table textarea {
   width: 100%;
@@ -426,10 +333,105 @@ const handleSubmitOrder = async () => {
   box-sizing: border-box;
   text-align: center;
   background: transparent;
-  display: block;
 }
 
-/* 辅助样式 */
+/* 工序模块样式 */
+.process-body {
+  border: 2px solid #000; /* 给每个 tbody 增加重边框，强化模块感 */
+}
+.bg-index {
+  background: #0f172a;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* 扩展详情行样式 */
+.extra-detail-row td {
+  background: #f8fafc;
+  padding: 10px !important;
+  border-top: none; /* 视觉上与上一行连接 */
+}
+
+.detail-fieldset {
+  border: 1px dashed #cbd5e1;
+  padding: 10px;
+  position: relative;
+}
+
+.detail-content-wrapper {
+  display: flex;
+  gap: 20px;
+  min-height: 80px;
+}
+
+.detail-left {
+  flex: 2;
+}
+.detail-right {
+  flex: 1;
+  border-left: 1px solid #e2e8f0;
+  padding-left: 20px;
+}
+
+.detail-label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #64748b;
+}
+.detail-left textarea {
+  width: 100%;
+  height: 60px;
+  border: 1px solid #e2e8f0 !important;
+  background: #fff !important;
+  text-align: left !important;
+}
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.info-item {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.info-item input {
+  border-bottom: 1px solid #ccc !important;
+  width: 100px;
+  text-align: left;
+}
+
+.status-tag {
+  background: #000;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* 锁定层 */
+.module-lock {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #ef4444;
+  z-index: 5;
+}
+
+/* 辅助 */
+.creator-wrapper {
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
 .bg-gray {
   background-color: #f1f5f9;
   font-weight: bold;
@@ -438,120 +440,38 @@ const handleSubmitOrder = async () => {
 .align-center {
   text-align: center;
 }
-.creator-wrapper {
-  padding: 40px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-.top-nav {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-.underline-input {
-  border: none;
-  border-bottom: 1px solid #000;
-  outline: none;
-  width: 150px;
-}
-.btn {
-  padding: 8px 16px;
-  cursor: pointer;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-}
-.btn-primary {
-  background: #0f172a;
-  color: #fff;
-  border: none;
-}
-.main-title {
-  text-align: center;
-  font-size: 28px;
-  margin: 0;
-}
-.version-badge {
-  text-align: right;
-  font-size: 12px;
-}
 .heavy-divider {
   border-top: 2px solid #000;
-  margin: 10px 0 20px 0;
+  margin: 20px 0;
 }
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  margin: 20px 0 10px;
+.add-row-full-btn {
+  width: 100%;
+  padding: 10px;
+  background: #f1f5f9;
+  cursor: pointer;
+  border: none;
+  font-weight: bold;
 }
-.table-scroll-container {
-  overflow-x: auto;
+.remove-btn {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
 }
 .attachment-manager {
-  margin-top: 15px;
-  max-width: 500px; /* 限制宽度，不占满全屏 */
+  margin-bottom: 20px;
 }
-
-.section-header-mini {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 5px;
-}
-
-.add-file-btn {
-  background: none;
-  border: 1px dashed #000;
-  padding: 2px 8px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
 .mini-table {
-  font-size: 11px; /* 附件表稍微小一点，不抢主表戏 */
+  width: auto;
+  min-width: 400px;
 }
-
-.file-cell {
-  padding: 0 4px !important;
-}
-
-.file-trigger-wrapper {
-  display: flex;
+.auditlog-related {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 100%;
+  gap: 10px;
+  margin-right: 30px;
+  margin-top: 20px;
 }
-
-.btn-browse {
-  border: 1px solid #ccc;
-  background: #fff;
-  font-size: 11px;
-  padding: 2px 6px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.file-name-text {
-  color: #666;
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* 重置 fieldset 样式，去除黑边、边距和补白 */
-fieldset {
-  border: none;
-  margin: 0;
-  padding: 0;
-  min-width: 0; /* 修复某些浏览器下 fieldset 默认的最小宽度问题 */
-  display: contents; /* 关键：让 fieldset 不参与布局，内部元素直接按原样排版 */
-}
-
-/* 如果你希望在禁用状态下，输入框有统一的视觉反馈，可以加这一条 */
-fieldset:disabled input,
-fieldset:disabled textarea {
-  background-color: #f8fafc !important; /* 淡淡的灰色背景表示只读 */
-  color: #64748b;
-  cursor: not-allowed;
-}
-/* 复用你之前的 remove-btn 样式即可 */
 </style>

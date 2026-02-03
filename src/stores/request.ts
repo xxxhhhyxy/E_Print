@@ -1,5 +1,5 @@
-import type { IOrder } from '@/types/Order'
-import type { IWorkOrder } from '@/types/WorkOrder'
+import type { IOrder, OrderStatus } from '@/types/Order'
+import type { IWorkOrder, WorkOrderStatus } from '@/types/WorkOrder'
 import axios from 'axios'
 
 // 1. 创建实例
@@ -35,25 +35,79 @@ service.interceptors.response.use(
  * 通过业务员姓名获取订单列表
  * @param salesName 业务员名字
  */
-export const findOrdersBySales = (salesName: string): Promise<IOrder[]> => {
+export const FindOrdersBySales = (salesName: string): Promise<IOrder[]> => {
   return service.get('/orders/findBySales', {
     params: { sales: salesName }, // 后端接收 string 的参数名
   })
 }
 
-export const findOrdersByAudit = (auditName: string): Promise<IOrder[]> => {
+export const FindOrdersByAudit = (auditName: string): Promise<IOrder[]> => {
   return service.get('/orders/findByAudit', {
     params: { audit: auditName }, // 后端接收 string 的参数名
   })
 }
-export const findWorkOrdersByClerk = (clerkName: string): Promise<IWorkOrder[]> => {
-  return service.get('/workOrders/findByClerk', {
-    params: { sales: clerkName }, // 后端接收 string 的参数名
+
+// 1. 根据 ID 查询单个订单
+export const FindOrderByID = (orderId: string): Promise<IOrder> => {
+  return service.get('/orders/findById', {
+    params: { order_id: orderId },
   })
 }
-export const findWorkOrdersByAudit = (auditName: string): Promise<IWorkOrder[]> => {
+
+// 2. 根据状态查询订单列表 (如查询所有“待审核”的单子)
+export const FindOrdersWithStatus = (status: OrderStatus): Promise<IOrder[]> => {
+  return service.get('/orders/findWithStatus', {
+    params: { orderstatus: status },
+  })
+}
+
+// 3. 修改订单状态 (审核通过、驳回)
+export const ChangeOrderStatusTo = (orderunique: string, status: OrderStatus) => {
+  return service.post('/orders/updateStatus', {
+    order_unique: orderunique,
+    orderstatus: status,
+  })
+}
+
+//以下是工程单
+export const FindWorkOrdersByClerk = (clerkName: string): Promise<IWorkOrder[]> => {
+  return service.get('/workOrders/findByClerk', {
+    params: { work_clerk: clerkName }, // 后端接收 string 的参数名
+  })
+}
+export const FindWorkOrdersByAudit = (auditName: string): Promise<IWorkOrder[]> => {
   return service.get('/workOrders/findByAudit', {
-    params: { audit: auditName }, // 后端接收 string 的参数名
+    params: { work_audit: auditName }, // 后端接收 string 的参数名
+  })
+}
+
+export const FindWorkOrderByID = (workunique: string): Promise<IWorkOrder> => {
+  return service.get('/workOrders/findById', {
+    params: { work_unique: workunique },
+  })
+}
+
+// 5. 查询所有待处理的工单
+export const FindWorkOrdersWithStatus = (status: WorkOrderStatus): Promise<IWorkOrder[]> => {
+  return service.get('/workOrders/findWithStatus', {
+    params: { orderstatus: status },
+  })
+}
+
+// 6. 修改工单状态
+export const ChangeWorkOrderStatusTo = (workunique: string, status: WorkOrderStatus) => {
+  return service.post('/workOrders/updateStatus', {
+    work_unique: workunique,
+    workorderstatus: status,
+  })
+}
+
+// 7. 更新工序进度
+export const UpdateProcess = (workId: string, process: number, note: string) => {
+  return service.post('/workOrders/updateProcess', {
+    work_id: workId,
+    process: process, // 对应 int
+    dangQianJinDu: note, // 对应 string
   })
 }
 

@@ -56,7 +56,7 @@
               <td class="customer-name">{{ order.customer }}</td>
               <td>{{ order.chuHuoRiqiRequired }}</td>
               <td class="action-cell">
-                <button class="text-btn" @click="openForView(order)">管理</button>
+                <button class="text-btn" @click="openForView(order)">查看</button>
               </td>
             </tr>
 
@@ -68,14 +68,20 @@
       </div>
     </div>
 
-    <OrderInfo v-else :mode="activeMode" @close="showCreator = false" @submit="handleOrderUpload" />
+    <OrderInfo
+      v-else
+      :mode="activeMode"
+      :initialData="selectedOrder"
+      @close="showCreator = false"
+      @submit="handleOrderUpload"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { OrderStatus, type IOrder } from '@/types/Order'
-import request, { findOrdersBySales } from '@/stores/request'
+import request, { FindOrdersBySales } from '@/stores/request'
 import OrderInfo, { PageMode } from './OrderInfo.vue'
 
 // --- 状态控制 ---
@@ -96,7 +102,7 @@ onMounted(async () => {
 const fetchOrdersData = async () => {
   try {
     // 调用你在 request.ts 里写的函数，扒拉 admin 的数据
-    const data = await findOrdersBySales('admin')
+    const data = await FindOrdersBySales('admin')
 
     // 将拿到的数组赋值给响应式变量 orders
     // processedOrders 会根据这个数据的变化自动重新计算过滤和排序
@@ -110,12 +116,13 @@ const fetchOrdersData = async () => {
 }
 
 // --- 核心交互逻辑 ---
-
+const selectedOrder = ref<IOrder | null>(null)
 /**
  * 以编辑模式打开
  */
 const openForCreate = () => {
   activeMode.value = PageMode.EDIT
+  selectedOrder.value = null // <-- 关键：创建时清空数据，让表单显示空白
   showCreator.value = true
 }
 
@@ -126,6 +133,7 @@ const openForCreate = () => {
 const openForView = (order: IOrder) => {
   console.log('查看订单详情:', order.order_id)
   activeMode.value = PageMode.VIEW
+  selectedOrder.value = order // <-- 关键：把选中的订单存起来
   showCreator.value = true
   // 注意：这里后续需要增加逻辑将 order 数据传给 OrderInfo
 }
@@ -140,7 +148,7 @@ const handleOrderUpload = async (fd: FormData) => {
     await request.post('/orders/create', fd)
     alert('订单已成功提交审核！')
     showCreator.value = false
-    // fetchOrders() // 这里可以刷新列表
+    fetchOrdersData() // 这里可以刷新列表
   } catch (err) {
     console.error('后端响应错误:', err)
     alert('发送失败，请检查网络或后端服务')

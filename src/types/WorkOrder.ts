@@ -29,7 +29,6 @@ export interface IWorkOrder {
 }
 
 export enum WorkOrderStatus {
-  TBD = '未创建',
   DRAFT = '草稿',
   PENDING_REVIEW = '待审核',
   APPROVED = '通过',
@@ -106,10 +105,10 @@ export function formatFullTime(date: Date): string {
 
 // ============ 业务逻辑 ============
 
-export function initializeAuditLog(orderData: Partial<IWorkOrder>, operatorName: string): void {
+export function initializeAuditLog(orderData: Partial<IWorkOrder>): void {
   const firstLog: IAuditLog = {
     time: formatFullTime(new Date()),
-    operator: operatorName || '未知业务员',
+    operator: orderData.work_clerk || '未知业务员',
     action: 'submit',
     comment: '业务员提交订单，发起审核流程',
   }

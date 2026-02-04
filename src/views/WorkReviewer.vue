@@ -210,14 +210,22 @@ const handleView = (work: IWorkOrder) => {
 
   let targetMode: PageMode
 
-  if (currentTab.value !== 'PENDING') {
-    targetMode = PageMode.VIEW
+  if (work.workorderstatus === WorkOrderStatus.PENDING_REVIEW) {
+    targetMode = PageMode.REVIEW
   } else if (work.workorderstatus === WorkOrderStatus.APPROVED) {
     targetMode = PageMode.PRODUCTION
   } else {
-    // 这里 currentTab 已经是 'PENDING' 了
-    targetMode = PageMode.REVIEW
+    targetMode = PageMode.VIEW
   }
+
+  // if (currentTab.value !== 'PENDING') {
+  //   targetMode = PageMode.VIEW
+  // } else if (work.workorderstatus === WorkOrderStatus.APPROVED) {
+  //   targetMode = PageMode.PRODUCTION
+  // } else {
+  //   // 这里 currentTab 已经是 'PENDING' 了
+  //   targetMode = PageMode.REVIEW
+  // }
 
   // 2. 将计算结果赋给 ref
   activeMode.value = targetMode

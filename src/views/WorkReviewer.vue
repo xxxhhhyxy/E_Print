@@ -115,11 +115,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { type IWorkOrder, WorkOrderStatus } from '@/types/WorkOrder'
 import WorkOrderInfo, { PageMode } from './WorkOrderInfo.vue'
-import {
-  FindWorkOrdersWithStatus,
-  FindWorkOrdersByAudit,
-  ChangeWorkOrderStatusTo,
-} from '@/stores/request'
+import { FindWorkOrdersWithStatus, ChangeWorkOrderStatusTo } from '@/stores/request'
 
 // --- 状态定义 ---
 const currentTab = ref<'PENDING' | 'REVIEWED'>('PENDING')
@@ -140,16 +136,36 @@ const reviewedWorkSource = ref<IWorkOrder[]>([])
 onMounted(async () => {
   await fetchWorksData()
 })
-
+// export enum WorkOrderStatus {
+//   DRAFT = '草稿',
+//   PENDING_REVIEW = '待审核',
+//   APPROVED = '通过',
+//   REJECTED = '驳回',
+//   IN_PRODUCTION = '生产中',
+//   COMPLETED = '完成',
+//   CANCELLED = '取消',
+// }
 const fetchWorksData = async () => {
   try {
     // 1. 获取全厂待审核工单
-    const pendingData = await FindWorkOrdersWithStatus(WorkOrderStatus.PENDING_REVIEW)
-    pendingWorkSource.value = pendingData
+    const [pendingData, approveData, productionData] = await Promise.all([
+      FindWorkOrdersWithStatus(WorkOrderStatus.PENDING_REVIEW),
+      FindWorkOrdersWithStatus(WorkOrderStatus.APPROVED),
+      FindWorkOrdersWithStatus(WorkOrderStatus.IN_PRODUCTION),
+    ])
 
-    // 2. 获取当前用户（admin）已审工单历史
-    const reviewedData = await FindWorkOrdersByAudit('admin')
-    reviewedWorkSource.value = reviewedData
+    // 2. 将结果合并后赋值给待办池
+    // 这样你的 pendingWorkSource 就会包含这两种状态的所有工单
+    pendingWorkSource.value = [...pendingData, ...approveData, ...productionData]
+
+    // 2. 获取已经结束
+    const [completeData, cancelData] = await Promise.all([
+      FindWorkOrdersWithStatus(WorkOrderStatus.PENDING_REVIEW),
+      FindWorkOrdersWithStatus(WorkOrderStatus.IN_PRODUCTION),
+    ])
+
+    //const reviewedData = await FindWorkOrdersByAudit('admin')
+    reviewedWorkSource.value = [...completeData, ...cancelData]
   } catch (err) {
     console.error('工单数据获取失败:', err)
   }
@@ -227,6 +243,8 @@ const handleApprove = async (wd: IWorkOrder) => {
   isUploading.value = true
   try {
     await ChangeWorkOrderStatusTo(wd.work_unique, WorkOrderStatus.APPROVED)
+    selectedOrder.value = null // 关闭详情弹窗
+    await fetchWorksData()
   } catch (err) {
     console.error('后端响应错误:', err)
     alert('发送失败，请检查网络或后端服务')
@@ -239,6 +257,8 @@ const handleReject = async (wd: IWorkOrder) => {
   isUploading.value = true
   try {
     await ChangeWorkOrderStatusTo(wd.work_unique, WorkOrderStatus.REJECTED)
+    selectedOrder.value = null // 关闭详情弹窗
+    await fetchWorksData()
   } catch (err) {
     console.error('后端响应错误:', err)
     alert('发送失败，请检查网络或后端服务')

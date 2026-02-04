@@ -90,7 +90,7 @@ export const FindWorkOrderByID = (workunique: string): Promise<IWorkOrder> => {
 // 5. 查询所有待处理的工单
 export const FindWorkOrdersWithStatus = (status: WorkOrderStatus): Promise<IWorkOrder[]> => {
   return service.get('/workOrders/findWithStatus', {
-    params: { orderstatus: status },
+    params: { workorderstatus: status },
   })
 }
 

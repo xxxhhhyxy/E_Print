@@ -113,25 +113,72 @@
         <p>当前模式：{{ currentTab === 'PENDING' ? '审批流程中' : '历史记录查阅' }}</p>
       </div>
     </div>
+    <OrderInfo
+      v-if="selectedOrder"
+      :mode="activeMode"
+      :initialData="selectedOrder"
+      @close="selectedOrder = null"
+      @approve="handleApprove"
+      @reject="handleReject"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { type IOrder, OrderStatus } from '@/types/Order'
-import { FindOrdersByAudit, FindOrdersWithStatus } from '@/stores/request'
-
+import { formatYMD, type IOrder, OrderStatus } from '@/types/Order'
+import request, { FindOrdersByAudit, FindOrdersWithStatus } from '@/stores/request'
+import OrderInfo, { PageMode } from './OrderInfo.vue' // 确保能拿到导出的 PageMode
+const activeMode = computed(() => {
+  // 如果当前在“未审核”标签，则进入“审核模式”，否则仅为“查看模式”
+  return currentTab.value === 'PENDING' ? PageMode.REVIEW : PageMode.VIEW
+})
 // --- 1. 状态定义 ---
 const currentTab = ref<'PENDING' | 'REVIEWED'>('PENDING')
 const searchQuery = ref<string>('')
 const selectedOrder = ref<IOrder | null>(null)
-
+const isUploading = ref(false)
 // 排序配置
 type SortKey = 'submitTime' | 'order_id' | 'customer' | 'chuHuoRiqiRequired' | 'orderstatus'
 const sortConfig = ref<{ key: SortKey; order: 'asc' | 'desc' }>({
   key: 'submitTime',
   order: 'desc',
 })
+
+const handleApprove = async (fd: FormData) => {
+  console.log('正在处理审核通过并保存数据...')
+  if (isUploading.value) return
+  isUploading.value = true
+  // 这里调用你的接口，如 await UpdateOrder(fd)
+
+  if (selectedOrder.value) {
+    selectedOrder.value.audit = 'admin'
+    selectedOrder.value.auditDate = formatYMD(new Date())
+  }
+
+  try {
+    await request.post('/workOrders/create', fd)
+    alert('工程单已成功提交审核！')
+    //showCreator.value = false
+    //await ChangeOrderStatusTo(selectedOrder.value.order_unique, OrderStatus.APPROVED)
+
+    fetchOrdersData() // 这里可以刷新列表
+  } catch (err) {
+    console.error('后端响应错误:', err)
+    alert('发送失败，请检查网络或后端服务')
+  } finally {
+    isUploading.value = false
+  }
+  selectedOrder.value = null
+  await fetchOrdersData() // 刷新列表
+}
+
+// 处理驳回
+const handleReject = () => {
+  console.log('订单已被驳回')
+  selectedOrder.value = null
+  fetchOrdersData()
+}
 
 // --- 2. 两个独立的数据源 ---
 const pendingOrdersSource = ref<IOrder[]>([]) // 对应“未审核”标签

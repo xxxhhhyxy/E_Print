@@ -150,14 +150,44 @@
               </td>
             </tr>
 
-            <tr class="extra-detail-row">
-              <td colspan="18">
-                <fieldset :disabled="props.mode === PageMode.VIEW" class="detail-fieldset">
-                  <td>开始日期</td>
-                  <td>当前进度</td>
-                  <td>预计结束</td>
-                </fieldset>
+            <tr v-if="mode === PageMode.PRODUCTION">
+              <td></td>
+              <td>开始日期</td>
+              <td><input type="date" v-model="item.kaiShiRiQi" /></td>
+              <td colspan="12" class="progress-td">
+                <div class="progress-track">
+                  <div
+                    class="bar-fill time-flow"
+                    :style="{ width: `${calculateTimeProgress(item)}%` }"
+                  >
+                    <span v-if="calculateTimeProgress(item) > 5" class="bar-label">
+                      {{ calculateTimeProgress(item) }}%
+                    </span>
+                  </div>
+                </div>
               </td>
+              <td><input type="date" v-model="item.yuQiJieShu" /></td>
+              <td>预计结束</td>
+            </tr>
+            <tr v-if="mode === PageMode.PRODUCTION">
+              <td></td>
+              <td>当前进度</td>
+              <td><input v-model.number="item.dangQianJinDu" />%</td>
+              <td colspan="12" class="progress-td">
+                <div class="progress-track">
+                  <div
+                    class="bar-fill production-flow"
+                    :style="{ width: Math.min(100, Math.max(0, item.dangQianJinDu || 0)) + '%' }"
+                  >
+                    <span v-if="(item.dangQianJinDu || 0) > 5" class="bar-label">
+                      {{ item.dangQianJinDu }}%
+                    </span>
+                  </div>
+                  <!-- <span v-else class="bar-label-outside">{{ item.dangQianJinDu || 0 }}%</span> -->
+                </div>
+              </td>
+              <td colspan="2"></td>
+              <td></td>
             </tr>
           </tbody>
 
@@ -171,6 +201,37 @@
         </table>
       </div>
 
+      <fieldset
+        :disabled="props.mode !== PageMode.REVIEW"
+        v-if="props.mode !== PageMode.EDIT"
+        class="audit-section"
+      >
+        <div class="section-label" style="margin-bottom: 10px">审核决策</div>
+        <table class="production-table audit-table">
+          <tbody>
+            <tr>
+              <td class="label" width="100">审核意见</td>
+              <td>
+                <textarea
+                  v-model="auditRemark"
+                  class="cell-input audit-textarea"
+                  placeholder="请输入审核处理意见（如拒绝原因等）..."
+                ></textarea>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="audit-actions">
+          <button class="btn-audit approve" @click="handleApprove">
+            <span class="icon">通过</span>
+          </button>
+          <button class="btn-audit reject" @click="handleReject">
+            <span class="icon">驳回</span>
+          </button>
+        </div>
+      </fieldset>
+
       <div class="audit-info-footer">
         <div class="auditlog-related">
           <td>制单员:</td>
@@ -178,12 +239,20 @@
           <td>时间：</td>
           <td><input type="date" v-model="WorkOrderData.zhiDanShiJian" class="cell-input" /></td>
         </div>
-        <fieldset :disabled="props.mode !== PageMode.REVIEW" class="auditlog-related">
+        <div class="auditlog-related">
           <td>审核员:</td>
-          <td><input v-model="WorkOrderData.work_audit" class="cell-input" /></td>
+          <td>
+            <input
+              :disabled="props.mode !== PageMode.REVIEW"
+              v-model="WorkOrderData.work_audit"
+              class="cell-input"
+            />
+          </td>
           <td>时间：</td>
-          <td><input type="date" class="cell-input" /></td>
-        </fieldset>
+          <td>
+            <input :disabled="props.mode !== PageMode.REVIEW" type="date" class="cell-input" />
+          </td>
+        </div>
       </div>
     </section>
   </div>
@@ -199,8 +268,9 @@ export enum PageMode {
 </script>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import {
+  type IIM,
   type IWorkOrder,
   WorkOrderStatus,
   formatYMD,
@@ -208,52 +278,92 @@ import {
   prepareWorkOrderForSubmit,
 } from '@/types/WorkOrder'
 
-const emit = defineEmits(['close', 'submit'])
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'submit', fd: FormData): void // 提交 FormData 给父组件
+  (e: 'approve', wd: IWorkOrder): void
+  (e: 'reject', wd: IWorkOrder): void
+}>()
+// --- 审核意见---
+const auditRemark = ref('')
 const props = defineProps<{
   mode: PageMode
   initialData?: IWorkOrder | null
 }>()
 
-const createEmptyProcess = () => ({
+const createEmptyProcess = (): Partial<IIM> => ({
   buJianMingCheng: '',
   yinShuaYanSe: '',
   wuLiaoMingCheng: '',
   pinPai: '',
   caiLiaoGuiGe: '',
   FSC: '',
-  kaiShu: undefined,
+  kaiShu: 0,
   shangJiChiCun: '',
-  paiBanMuShu: undefined,
-  yinChuShu: undefined,
-  yinSun: undefined,
-  lingLiaoShu: undefined,
+  paiBanMuShu: 0,
+  yinChuShu: 0,
+  yinSun: 0,
+  lingLiaoShu: 0,
   biaoMianChuLi: '',
-  yinShuaBanShu: undefined,
+  yinShuaBanShu: 0,
   shengChanLuJing: '',
   paiBanFangShi: '',
-  dangQianJinDu: '待产',
-  // 扩展字段
-  memo: '',
-  qcRequest: '',
-  packWay: '',
-  isLocked: false,
+  kaiShiRiQi: '',
+  yuQiJieShu: '',
+  dangQianJinDu: 0,
 })
 
 const createEmptyWorkOrder = (): Partial<IWorkOrder> => ({
   work_id: '',
-  work_ver: '1.0',
+  work_ver: '',
+  work_unique: '', //唯一索引，order审核通过的时候自动创建，work_id+"_"+work_ver
   work_clerk: '',
+  clerkDate: '',
   work_audit: '',
+  auditDate: '',
   gongDanLeiXing: '',
   caiLiao: '',
+  chanPinLeiXing: '', //产品类型
   zhiDanShiJian: formatYMD(new Date()),
   customer: '',
   productName: '',
+  customerPO: '', //客户PO
+  chanPinGuiGe: '', //产品规格：似乎是页面大小
+
+  //似乎都可以从Order.ts里直接过继过来
+  dingDanShuLiang: 0, //订单数量
+  chuYangShuLiang: 0, //出样数量
+  chaoBiLiShuLiang: 0, //超比例数量
+  benChangFangSun: 0, //本厂放损
+  chuYangRiqiRequired: '', //出样日期要求
+  chuHuoRiqiRequired: '', //出货日期要求
+
   intermedia: [createEmptyProcess()],
   workorderstatus: WorkOrderStatus.DRAFT,
   attachments: [],
+  auditLogs: [], // 审批日志：记录“单子是怎么过的” (用于查看审核记录), OrderState不是Audit的时候不再更新
 })
 
+const calculateTimeProgress = (item: IIM): number => {
+  // 增加健壮性检查：确保日期字符串存在
+  if (!item.kaiShiRiQi || !item.yuQiJieShu) return 0
+
+  const start: number = new Date(item.kaiShiRiQi).getTime()
+  const end: number = new Date(item.yuQiJieShu).getTime()
+
+  // 2026年当前的实时时间
+  const now: number = Date.now()
+
+  // 边界处理
+  if (now <= start) return 0
+  if (now >= end) return 100
+
+  const total: number = end - start
+  const elapsed: number = now - start
+
+  // 使用 Math.min/max 确保结果严格在 0-100 之间
+  return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)))
+}
 const WorkOrderData = reactive<IWorkOrder>(createEmptyWorkOrder() as IWorkOrder)
 
 const resetToDefault = () => {
@@ -307,6 +417,46 @@ const handleSubmitOrder = async () => {
   initializeAuditLog(WorkOrderData)
   emit('submit', prepareWorkOrderForSubmit(WorkOrderData))
 }
+
+const handleApprove = () => {
+  if (!auditRemark.value.trim()) {
+    alert('拒绝订单时请填写审核意见')
+    return
+  }
+
+  if (!confirm(`确定要通过该工程单吗？`)) return
+
+  try {
+    // 构造审核数据
+    const auditPayload = {
+      orderId: WorkOrderData.work_unique,
+      passed: true,
+      remark: auditRemark.value,
+      auditor: 'admin', // 或者当前登录用户
+    }
+
+    // 调用后端接口（示例路径）
+    // await request.post('/orders/audit', auditPayload)
+
+    console.log('提交审核结果:', auditPayload)
+    alert(`订单已通过`)
+
+    // if (isPass) {
+
+    //const newWorkOrder = reactive<IWorkOrder>(createWorkOrderFromOrder(orderData) as IWorkOrder)
+    const fd = prepareWorkOrderForSubmit(WorkOrderData)
+    emit('approve', WorkOrderData)
+    // } else {
+    //   emit('reject')
+    // }
+    emit('close')
+  } catch (err) {
+    console.error('审核操作失败', err)
+    alert('操作失败，请重试')
+  }
+}
+
+const handleReject = () => {}
 </script>
 
 <style scoped>
@@ -473,5 +623,46 @@ const handleSubmitOrder = async () => {
   gap: 10px;
   margin-right: 30px;
   margin-top: 20px;
+}
+.progress-td {
+  padding: 8px 12px !important;
+  background-color: #fafafa;
+}
+
+.progress-track {
+  width: 100%;
+  height: 20px;
+  background: #eee;
+  border: 1px solid #333; /* 延续你的工业风黑边 */
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width 0.8s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* 时间流逝感：深色调 */
+.time-flow {
+  background: linear-gradient(to right, #475569, #0f172a);
+}
+
+/* 生产进度感：绿色调 */
+.production-flow {
+  background: linear-gradient(to right, #10b981, #059669);
+}
+
+.bar-label {
+  color: white;
+  font-size: 11px;
+  padding-right: 5px;
+  font-weight: bold;
+  white-space: nowrap;
 }
 </style>

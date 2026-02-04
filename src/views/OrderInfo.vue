@@ -669,6 +669,13 @@
         </fieldset>
       </div>
     </div>
+
+    <!-- <OrderInfo
+      :mode="currentTab === 'PENDING' ? 'audit' : 'view'"
+      :initialData="selectedOrder"
+      @close="selectedOrder = null"
+      @submit="handleAuditSubmit"
+    /> -->
   </div>
 </template>
 
@@ -693,7 +700,7 @@ import {
 } from '@/types/Order'
 import { prepareWorkOrderForSubmit, WorkOrderStatus, type IWorkOrder } from '@/types/WorkOrder'
 
-// --- 审核相关状态 ---
+// --- 审核意见---
 const auditRemark = ref('')
 
 // 这里的 props.mode 就是那个“会被外部更改”的唯一变量
@@ -825,7 +832,7 @@ const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
   dingDanShuLiang: sourceOrder.dingDanShuLiang || 0,
   chuYangShuLiang: sourceOrder.chuYangShuLiang || 0,
   chaoBiLiShuLiang: sourceOrder.chaoBiLiShuLiang || 0,
-  benChangFangSun: '',
+  benChangFangSun: 0,
   chuYangRiqiRequired: sourceOrder.chuyangRiqiRequired || '',
   chuHuoRiqiRequired: sourceOrder.chuHuoRiqiRequired || '',
 
@@ -838,19 +845,19 @@ const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
       pinPai: '',
       caiLiaoGuiGe: '',
       FSC: '',
-      kaiShu: undefined,
+      kaiShu: 0,
       shangJiChiCun: '',
-      paiBanMuShu: undefined,
-      yinChuShu: undefined,
-      yinSun: undefined,
-      lingLiaoShu: undefined,
+      paiBanMuShu: 0,
+      yinChuShu: 0,
+      yinSun: 0,
+      lingLiaoShu: 0,
       biaoMianChuLi: '',
-      yinShuaBanShu: undefined,
+      yinShuaBanShu: 0,
       shengChanLuJing: '',
       paiBanFangShi: '',
       kaiShiRiQi: '',
       yuQiJieShu: '',
-      dangQianJinDu: '0%',
+      dangQianJinDu: 0,
     },
   ],
 
@@ -911,6 +918,7 @@ const emit = defineEmits<{
   (e: 'reject'): void
 }>()
 
+//提交订单
 const handleSubmitOrder = async () => {
   // 基础校验
   if (!orderData.customer || !orderData.productName) {
@@ -948,19 +956,14 @@ const handleSubmitOrder = async () => {
   }
 }
 
-// --- 订单核心数据 ---
-
-/**
- * 处理审核逻辑
- * @param isPass 是否通过
- */
+// 审核通过或者拒绝
 const handleAudit = async (isPass: boolean) => {
   if (!isPass && !auditRemark.value.trim()) {
     alert('拒绝订单时请填写审核意见')
     return
   }
 
-  const actionText = isPass ? '通过' : '拒绝'
+  const actionText = isPass ? '通过' : '驳回'
   if (!confirm(`确定要${actionText}该订单吗？`)) return
 
   try {
@@ -981,7 +984,7 @@ const handleAudit = async (isPass: boolean) => {
     if (isPass) {
       const newWorkOrder = reactive<IWorkOrder>(createWorkOrderFromOrder(orderData) as IWorkOrder)
       const fd = prepareWorkOrderForSubmit(newWorkOrder)
-      emit('submit', fd)
+      emit('approve', fd)
     } else {
       emit('reject')
     }
@@ -1068,31 +1071,18 @@ const removeAttachment = (index: number) => {
 const addDetailRow = () => {
   orderData.chanPinMingXi?.push({
     neiWen: '',
-
     yongZhiChiCun: '',
-
     houDu: 0,
-
     keZhong: 0,
-
     chanDi: '',
-
     pinPai: '',
-
     zhiLei: '',
-
     FSC: '',
-
     yeShu: 0,
-
     yinSe: '',
-
     zhuanSe: '',
-
     biaoMianChuLi: '',
-
     zhuangDingGongYi: '',
-
     beiZhu: '',
   })
 }

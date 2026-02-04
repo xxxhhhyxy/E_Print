@@ -19,7 +19,7 @@ export interface IWorkOrder {
   dingDanShuLiang?: number //订单数量
   chuYangShuLiang?: number //出样数量
   chaoBiLiShuLiang?: number //超比例数量
-  benChangFangSun?: string //本厂放损
+  benChangFangSun?: number //本厂放损
   chuYangRiqiRequired?: string //出样日期要求
   chuHuoRiqiRequired?: string //出货日期要求
   intermedia: IIM[] //中间物料详单
@@ -62,7 +62,7 @@ export interface IIM {
   //表格上没有的
   kaiShiRiQi?: string //工序开始日期
   yuQiJieShu?: string //工序预期结束日期
-  dangQianJinDu?: string //工序当前进度，由技工手动输入
+  dangQianJinDu?: number //工序当前进度，由技工手动输入
 }
 
 /** 附件条目接口 */
@@ -156,7 +156,7 @@ export const prepareWorkOrderForSubmit = (rawOrder: Partial<IWorkOrder>): FormDa
 
   // 5. 【关键缺失】：将清洗后的 JSON 数据也塞进 FormData
   // 后端通常需要从 'orderData' 字段解析字符串化的 JSON
-  formData.append('orderData', JSON.stringify(orderCopy))
+  formData.append('workOrderData', JSON.stringify(orderCopy))
 
   return formData
 }

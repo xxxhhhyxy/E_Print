@@ -113,7 +113,7 @@ import { ref, computed, onMounted } from 'vue'
 import { WorkOrderStatus, type IWorkOrder } from '@/types/WorkOrder'
 // 核心：导入你的创建器组件
 import WorkOrderInfo, { PageMode } from './WorkOrderInfo.vue'
-import request, { FindWorkOrdersByClerk } from '@/stores/request'
+import request, { FindWorkOrdersWithStatus } from '@/stores/request'
 
 const activeMode = ref<PageMode>(PageMode.VIEW)
 const isUploading = ref(false)
@@ -133,7 +133,7 @@ onMounted(async () => {
 const fetchOrdersData = async () => {
   try {
     // 调用你在 request.ts 里写的函数，扒拉 admin 的数据
-    const data = await FindWorkOrdersByClerk('admin')
+    const data = await FindWorkOrdersWithStatus(WorkOrderStatus.DRAFT)
 
     // 将拿到的数组赋值给响应式变量 orders
     // processedOrders 会根据这个数据的变化自动重新计算过滤和排序
@@ -211,7 +211,7 @@ const handleOrderUpload = async (fd: FormData) => {
   if (isUploading.value) return
   isUploading.value = true
   try {
-    await request.post('/orders/create', fd)
+    await request.post('/workOrders/create', fd)
     alert('订单已成功提交审核！')
     showCreator.value = false
     fetchOrdersData() // 这里可以刷新列表

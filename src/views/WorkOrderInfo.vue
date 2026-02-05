@@ -247,24 +247,24 @@
 
       <div class="audit-info-footer">
         <div class="auditlog-related">
-          <td>制单员:</td>
-          <td><input v-model="WorkOrderData.work_clerk" class="cell-input" /></td>
-          <td>时间：</td>
-          <td><input type="date" v-model="WorkOrderData.zhiDanShiJian" class="cell-input" /></td>
+          <div>制单员:</div>
+          <div><input v-model="WorkOrderData.work_clerk" class="cell-input" /></div>
+          <div>时间：</div>
+          <div><input type="date" v-model="WorkOrderData.zhiDanShiJian" class="cell-input" /></div>
         </div>
         <div class="auditlog-related">
-          <td>审核员:</td>
-          <td>
+          <div>审核员:</div>
+          <div>
             <input
               :disabled="props.mode !== PageMode.REVIEW"
               v-model="WorkOrderData.work_audit"
               class="cell-input"
             />
-          </td>
-          <td>时间：</td>
-          <td>
+          </div>
+          <div>时间：</div>
+          <div>
             <input :disabled="props.mode !== PageMode.REVIEW" type="date" class="cell-input" />
-          </td>
+          </div>
         </div>
       </div>
     </section>
@@ -286,8 +286,9 @@ import {
   type IIM,
   type IWorkOrder,
   WorkOrderStatus,
+  formatFullTime,
   formatYMD,
-  initializeAuditLog,
+  addAuditLog,
   prepareWorkOrderForSubmit,
 } from '@/types/WorkOrder'
 
@@ -427,7 +428,9 @@ const onFileSelected = (e: Event, index: number) => {
 const handleSubmitOrder = async () => {
   if (!WorkOrderData.customer) return alert('请填写客户')
   WorkOrderData.work_unique = WorkOrderData.work_id + '_' + WorkOrderData.work_ver
-  initializeAuditLog(WorkOrderData)
+  WorkOrderData.workorderstatus = WorkOrderStatus.PENDING_REVIEW
+  WorkOrderData.clerkDate = formatFullTime(new Date())
+  addAuditLog(WorkOrderData)
   emit('submit', prepareWorkOrderForSubmit(WorkOrderData))
 }
 
@@ -469,7 +472,27 @@ const handleApprove = () => {
   }
 }
 
-const handleReject = () => {}
+const handleReject = () => {
+  if (!auditRemark.value.trim()) {
+    alert('拒绝订单时请填写审核意见')
+    return
+  }
+  if (!confirm(`确定要通过该工程单吗？`)) return
+  try {
+    // 构造审核数据
+    const auditPayload = {
+      orderId: WorkOrderData.work_unique,
+      passed: true,
+      remark: auditRemark.value,
+      auditor: 'admin', // 或者当前登录用户
+    }
+
+    emit('reject', WorkOrderData)
+  } catch (err) {
+    console.error('审核操作失败', err)
+    alert('操作失败，请重试')
+  }
+}
 </script>
 
 <style scoped>

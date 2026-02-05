@@ -77,8 +77,8 @@
                 </span>
               </td>
 
-              <td class="time-text">{{ getFirstAuditTime(order) }}</td>
-
+              <td class="time-text">{{ order.salesDate }}</td>
+              <!-- <td class="time-text">{{ getFirstAuditTime(order) }}</td> -->
               <td class="bold-text">{{ order.order_id || '未分配' }}</td>
 
               <td class="customer-name">{{ order.customer }}</td>

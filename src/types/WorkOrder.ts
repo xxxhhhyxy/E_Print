@@ -107,7 +107,7 @@ export function formatFullTime(date: Date): string {
 
 // ============ 业务逻辑 ============
 
-export function initializeAuditLog(orderData: Partial<IWorkOrder>): void {
+export function addAuditLog(orderData: Partial<IWorkOrder>): void {
   const firstLog: IAuditLog = {
     time: formatFullTime(new Date()),
     operator: orderData.work_clerk || '未知业务员',
@@ -116,7 +116,7 @@ export function initializeAuditLog(orderData: Partial<IWorkOrder>): void {
   }
   orderData.auditLogs = orderData.auditLogs || []
   orderData.auditLogs.push(firstLog)
-  orderData.workorderstatus = WorkOrderStatus.PENDING_REVIEW
+  //
 }
 
 /**

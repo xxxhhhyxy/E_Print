@@ -110,7 +110,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { WorkOrderStatus, type IWorkOrder } from '@/types/WorkOrder'
+import {
+  addAuditLog,
+  formatFullTime,
+  prepareWorkOrderForSubmit,
+  WorkOrderStatus,
+  type IWorkOrder,
+} from '@/types/WorkOrder'
 // 核心：导入你的创建器组件
 import WorkOrderInfo, { PageMode } from './WorkOrderInfo.vue'
 import request, { FindWorkOrdersByClerk, FindWorkOrdersWithStatus } from '@/stores/request'
@@ -210,9 +216,16 @@ const openForView = (work: IWorkOrder) => {
 /**
  * 处理订单提交
  */
-const handleOrderUpload = async (fd: FormData) => {
+const handleOrderUpload = async (wd: IWorkOrder) => {
   if (isUploading.value) return
   isUploading.value = true
+
+  wd.work_unique = wd.work_id + '_' + wd.work_ver
+  wd.workorderstatus = WorkOrderStatus.PENDING_REVIEW
+  wd.clerkDate = formatFullTime(new Date())
+  addAuditLog(wd)
+  const fd = prepareWorkOrderForSubmit(wd)
+
   try {
     await request.post('/workOrders/create', fd)
     alert('订单已成功提交审核！')

@@ -80,7 +80,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { OrderStatus, type IOrder } from '@/types/Order'
+import {
+  addAuditLog,
+  formatYMD,
+  OrderStatus,
+  prepareOrderFormData,
+  type IOrder,
+} from '@/types/Order'
 import request, { FindOrdersBySales } from '@/stores/request'
 import OrderInfo, { PageMode } from './OrderInfo.vue'
 
@@ -141,9 +147,19 @@ const openForView = (order: IOrder) => {
 /**
  * 处理订单提交
  */
-const handleOrderUpload = async (fd: FormData) => {
+const handleOrderUpload = async (curOrder: IOrder) => {
   if (isUploading.value) return
   isUploading.value = true
+
+  //定义唯一索引
+  curOrder.order_unique = curOrder.order_id + '_' + curOrder.order_ver
+  curOrder.orderstatus = OrderStatus.PENDING_REVIEW
+  // 依然在子组件完成日志初始化和数据封装，因为子组件最清楚表单结构
+  addAuditLog(curOrder, 'admin')
+  curOrder.sales = 'admin'
+  curOrder.salesDate = formatYMD(new Date())
+  const fd = prepareOrderFormData(curOrder, 'admin')
+
   try {
     await request.post('/orders/create', fd)
     alert('订单已成功提交审核！')

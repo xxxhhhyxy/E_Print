@@ -20,7 +20,7 @@
     <div v-if="!selectedOrder" class="list-container">
       <div class="header-bar">
         <div class="title-group">
-          <h2 class="main-title">{{ currentTab === 'PENDING' ? '工单待审池' : '工程审核历史' }}</h2>
+          <h2 class="main-title">{{ currentTab === 'PENDING' ? '进行中工单' : '已结束工单' }}</h2>
 
           <div class="search-container">
             <span class="search-icon">🔍</span>
@@ -114,9 +114,20 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { type IWorkOrder, WorkOrderStatus } from '@/types/WorkOrder'
+import {
+  formatFullTime,
+  formatYMD,
+  type IAuditLog,
+  type IWorkOrder,
+  WorkOrderStatus,
+} from '@/types/WorkOrder'
 import WorkOrderInfo, { PageMode } from './WorkOrderInfo.vue'
-import { FindWorkOrdersWithStatus, ChangeWorkOrderStatusTo } from '@/stores/request'
+import {
+  FindWorkOrdersWithStatus,
+  ChangeWorkOrderStatusTo,
+  AddWorkAuditInfo,
+  AddWorkAuditLog,
+} from '@/stores/request'
 
 // --- 状态定义 ---
 const currentTab = ref<'PENDING' | 'REVIEWED'>('PENDING')
@@ -264,11 +275,21 @@ const handleView = (work: IWorkOrder) => {
 //     isUploading.value = false
 //   }
 // }
-const handleApprove = async (wd: IWorkOrder) => {
+const handleApprove = async (wd: IWorkOrder, curComment: string) => {
   if (isUploading.value) return
   isUploading.value = true
   try {
     await ChangeWorkOrderStatusTo(wd.work_unique, WorkOrderStatus.IN_PRODUCTION)
+
+    await AddWorkAuditInfo(wd.work_unique, 'admin', formatYMD(new Date()))
+    const tempLog = (): IAuditLog => ({
+      time: formatFullTime(new Date()),
+      operator: 'admin',
+      action: 'approve',
+      comment: curComment,
+    })
+    await AddWorkAuditLog(wd.work_unique, tempLog())
+
     selectedOrder.value = null // 关闭详情弹窗
     await fetchWorksData()
   } catch (err) {
@@ -278,11 +299,20 @@ const handleApprove = async (wd: IWorkOrder) => {
     isUploading.value = false
   }
 }
-const handleReject = async (wd: IWorkOrder) => {
+const handleReject = async (wd: IWorkOrder, curComment: string) => {
   if (isUploading.value) return
   isUploading.value = true
   try {
     await ChangeWorkOrderStatusTo(wd.work_unique, WorkOrderStatus.REJECTED)
+    await AddWorkAuditInfo(wd.work_unique, 'admin', formatYMD(new Date()))
+    const tempLog = (): IAuditLog => ({
+      time: formatFullTime(new Date()),
+      operator: 'admin',
+      action: 'reject',
+      comment: curComment,
+    })
+    await AddWorkAuditLog(wd.work_unique, tempLog())
+
     selectedOrder.value = null // 关闭详情弹窗
     await fetchWorksData()
   } catch (err) {

@@ -701,15 +701,7 @@ export enum PageMode {
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 
-import {
-  OrderStatus,
-  type IOrder,
-  type IAttachment,
-  prepareOrderFormData,
-  addAuditLog,
-  formatFullTime,
-} from '@/types/Order'
-import { prepareWorkOrderForSubmit, WorkOrderStatus, type IWorkOrder } from '@/types/WorkOrder'
+import { OrderStatus, type IOrder, type IAttachment } from '@/types/Order'
 
 // --- 审核意见---
 const auditRemark = ref('')
@@ -818,66 +810,6 @@ const createEmptyOrder = (): Partial<IOrder> => ({
   auditLogs: [],
 })
 
-/**
- * 一步到位创建完整的工单初始对象
- * 消除嵌套函数调用，直接声明所有默认值
- */
-const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
-  // 1. 系统索引与基础信息
-
-  work_id: sourceOrder.order_id + '_W',
-  work_ver: sourceOrder.order_ver || '',
-  work_unique: sourceOrder.order_id + '_W_' + sourceOrder.order_ver,
-  work_clerk: 'admin',
-  work_audit: '',
-  gongDanLeiXing: '',
-  caiLiao: '',
-  chanPinLeiXing: '',
-  zhiDanShiJian: formatFullTime(new Date()),
-  customer: sourceOrder.customer || '',
-  customerPO: sourceOrder.customerPO || '',
-  productName: sourceOrder.productName || '',
-  chanPinGuiGe: '',
-
-  // 2. 从订单过继的数值字段
-  dingDanShuLiang: sourceOrder.dingDanShuLiang || 0,
-  chuYangShuLiang: sourceOrder.chuYangShuLiang || 0,
-  chaoBiLiShuLiang: sourceOrder.chaoBiLiShuLiang || 0,
-  benChangFangSun: 0,
-  chuYangRiqiRequired: sourceOrder.chuyangRiqiRequired || '',
-  chuHuoRiqiRequired: sourceOrder.chuHuoRiqiRequired || '',
-
-  // 3. 直接初始化中间物料详单的第一行（一步到位）
-  intermedia: [
-    {
-      buJianMingCheng: '',
-      yinShuaYanSe: '',
-      wuLiaoMingCheng: '',
-      pinPai: '',
-      caiLiaoGuiGe: '',
-      FSC: '',
-      kaiShu: 0,
-      shangJiChiCun: '',
-      paiBanMuShu: 0,
-      yinChuShu: 0,
-      yinSun: 0,
-      lingLiaoShu: 0,
-      biaoMianChuLi: '',
-      yinShuaBanShu: 0,
-      shengChanLuJing: '',
-      paiBanFangShi: '',
-      kaiShiRiQi: '',
-      yuQiJieShu: '',
-      dangQianJinDu: 0,
-    },
-  ],
-
-  // 4. 状态与日志
-  workorderstatus: WorkOrderStatus.DRAFT,
-  auditLogs: [],
-  attachments: [],
-})
-
 // 2. 初始化 reactive
 const orderData = reactive<IOrder>(createEmptyOrder() as IOrder)
 
@@ -924,9 +856,9 @@ watch(
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'submit', fd: FormData): void // 提交 FormData 给父组件
-  (e: 'approve', fd: FormData): void
-  (e: 'reject'): void
+  (e: 'submit', curOrder: IOrder): void // 提交 FormData 给父组件
+  (e: 'approve', curOrder: IOrder, curComment: string): void
+  (e: 'reject', curOrder: IOrder, curComment: string): void
 }>()
 
 //提交订单
@@ -954,15 +886,9 @@ const handleSubmitOrder = async () => {
         类型: typeof finalPayload[key],
       })),
     )
-    //定义唯一索引
-    orderData.order_unique = orderData.order_id + '_' + orderData.order_ver
-    orderData.orderstatus = OrderStatus.PENDING_REVIEW
-    // 依然在子组件完成日志初始化和数据封装，因为子组件最清楚表单结构
-    addAuditLog(orderData, salesman.value)
-    const fd = prepareOrderFormData(orderData, salesman.value)
 
     // 发射给父组件
-    emit('submit', fd)
+    emit('submit', orderData)
   } catch (err) {
     console.error('数据准备失败', err)
   }
@@ -994,13 +920,10 @@ const handleAudit = async (isPass: boolean) => {
     alert(`订单已${actionText}`)
 
     if (isPass) {
-      const newWorkOrder = reactive<IWorkOrder>(createWorkOrderFromOrder(orderData) as IWorkOrder)
-      orderData.orderstatus = OrderStatus.APPROVED
-      addAuditLog(orderData, salesman.value)
-      const fd = prepareWorkOrderForSubmit(newWorkOrder)
-      emit('approve', fd)
+      // emit('approve', fd)
+      emit('approve', orderData, auditRemark.value)
     } else {
-      emit('reject')
+      emit('reject', orderData, auditRemark.value)
     }
     emit('close')
   } catch (err) {

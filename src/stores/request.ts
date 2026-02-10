@@ -1,5 +1,5 @@
-import type { IOrder, OrderStatus } from '@/types/Order'
-import type { IWorkOrder, WorkOrderStatus } from '@/types/WorkOrder'
+import type { IAuditLog as orderlog, IOrder, OrderStatus } from '@/types/Order'
+import type { IAuditLog as worklog, IWorkOrder, WorkOrderStatus } from '@/types/WorkOrder'
 import axios from 'axios'
 
 // 1. 创建实例
@@ -64,9 +64,24 @@ export const FindOrdersWithStatus = (status: OrderStatus): Promise<IOrder[]> => 
 // 3. 修改订单状态 (审核通过、驳回)
 export const ChangeOrderStatusTo = (orderunique: string, status: OrderStatus) => {
   return service.post('/orders/updateStatus', {
-    order_unique: orderunique,
+    order_unique: orderunique, //订单索引
     orderstatus: status,
   })
+}
+//添加审核员信息
+export const AddOrderAuditInfo = (orderUnique: string, auditName: string, date: string) => {
+  return (
+    service.post('/orders/addAuditInfo'),
+    {
+      order_unique: orderUnique, //订单索引
+      audit: auditName, //审核员
+      auditDate: date, //审核日期
+    }
+  )
+}
+//添加审核记录
+export const AddOrderAuditLog = (orderUnique: string, log: orderlog) => {
+  return service.post('/orders/addAuditLog', { order_unique: orderUnique, auditLogs: log })
 }
 
 //以下是工程单
@@ -103,12 +118,29 @@ export const ChangeWorkOrderStatusTo = (workunique: string, status: WorkOrderSta
 }
 
 // 7. 更新工序进度
-export const UpdateProcess = (workId: string, process: number, note: string) => {
-  return service.post('/workOrders/updateProcess', {
+export const UpdateProgress = (workId: string, process: number, note: string) => {
+  return service.post('/workOrders/updateProgress', {
     work_id: workId,
-    process: process, // 对应 int
+    process: process, // 对应 float
     dangQianJinDu: note, // 对应 string
   })
+}
+
+//添加审核记录
+export const AddWorkAuditLog = (workUnique: string, log: worklog) => {
+  return service.post('/workOrders/addAuditLog', { work_unique: workUnique, auditLogs: log })
+}
+
+//添加审核员信息
+export const AddWorkAuditInfo = (workUnique: string, auditName: string, date: string) => {
+  return (
+    service.post('/workOrders/addAuditInfo'),
+    {
+      work_unique: workUnique, //订单索引
+      work_audit: auditName, //审核员
+      auditDate: date, //审核日期
+    }
+  )
 }
 
 export default service

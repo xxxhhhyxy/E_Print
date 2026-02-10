@@ -103,7 +103,7 @@
         </table>
       </fieldset>
 
-      <div class="table-scroll-container">
+      <fieldset class="table-scroll-container" :disabled="props.mode !== PageMode.EDIT">
         <table class="standard-table process-table">
           <thead>
             <tr class="bg-gray">
@@ -212,7 +212,7 @@
             </tr>
           </tfoot>
         </table>
-      </div>
+      </fieldset>
 
       <fieldset
         :disabled="props.mode !== PageMode.REVIEW"
@@ -282,21 +282,13 @@ export enum PageMode {
 
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
-import {
-  type IIM,
-  type IWorkOrder,
-  WorkOrderStatus,
-  formatFullTime,
-  formatYMD,
-  addAuditLog,
-  prepareWorkOrderForSubmit,
-} from '@/types/WorkOrder'
+import { type IIM, type IWorkOrder, WorkOrderStatus, formatYMD } from '@/types/WorkOrder'
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'submit', fd: FormData): void // 提交 FormData 给父组件
-  (e: 'approve', wd: IWorkOrder): void
-  (e: 'reject', wd: IWorkOrder): void
+  (e: 'submit', wd: IWorkOrder): void // 提交 FormData 给父组件
+  (e: 'approve', wd: IWorkOrder, comment: string): void
+  (e: 'reject', wd: IWorkOrder, comment: string): void
 }>()
 // --- 审核意见---
 const auditRemark = ref('')
@@ -427,11 +419,9 @@ const onFileSelected = (e: Event, index: number) => {
 
 const handleSubmitOrder = async () => {
   if (!WorkOrderData.customer) return alert('请填写客户')
-  WorkOrderData.work_unique = WorkOrderData.work_id + '_' + WorkOrderData.work_ver
-  WorkOrderData.workorderstatus = WorkOrderStatus.PENDING_REVIEW
-  WorkOrderData.clerkDate = formatFullTime(new Date())
-  addAuditLog(WorkOrderData)
-  emit('submit', prepareWorkOrderForSubmit(WorkOrderData))
+
+  emit('submit', WorkOrderData)
+  emit('close')
 }
 
 const handleApprove = () => {
@@ -460,8 +450,8 @@ const handleApprove = () => {
     // if (isPass) {
 
     //const newWorkOrder = reactive<IWorkOrder>(createWorkOrderFromOrder(orderData) as IWorkOrder)
-    const fd = prepareWorkOrderForSubmit(WorkOrderData)
-    emit('approve', WorkOrderData)
+    //const fd = prepareWorkOrderForSubmit(WorkOrderData)
+    emit('approve', WorkOrderData, auditRemark.value)
     // } else {
     //   emit('reject')
     // }
@@ -482,12 +472,13 @@ const handleReject = () => {
     // 构造审核数据
     const auditPayload = {
       orderId: WorkOrderData.work_unique,
-      passed: true,
+      passed: false,
       remark: auditRemark.value,
       auditor: 'admin', // 或者当前登录用户
     }
 
-    emit('reject', WorkOrderData)
+    emit('reject', WorkOrderData, auditRemark.value)
+    emit('close')
   } catch (err) {
     console.error('审核操作失败', err)
     alert('操作失败，请重试')

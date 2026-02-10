@@ -125,14 +125,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { formatYMD, type IOrder, OrderStatus } from '@/types/Order'
+import { ref, computed, onMounted, reactive } from 'vue'
+import {
+  formatYMD,
+  type IOrder,
+  OrderStatus,
+  type IAuditLog as orderlog,
+  formatFullTime,
+  addAuditLog,
+} from '@/types/Order'
 import request, {
+  AddOrderAuditInfo,
+  AddOrderAuditLog,
   ChangeOrderStatusTo,
   FindOrdersByAudit,
   FindOrdersWithStatus,
 } from '@/stores/request'
 import OrderInfo, { PageMode } from './OrderInfo.vue' // 确保能拿到导出的 PageMode
+import { prepareWorkOrderForSubmit, WorkOrderStatus, type IWorkOrder } from '@/types/WorkOrder'
 const activeMode = computed(() => {
   // 如果当前在“未审核”标签，则进入“审核模式”，否则仅为“查看模式”
   return currentTab.value === 'PENDING' ? PageMode.REVIEW : PageMode.VIEW
@@ -149,24 +159,84 @@ const sortConfig = ref<{ key: SortKey; order: 'asc' | 'desc' }>({
   order: 'desc',
 })
 
-const handleApprove = async (fd: FormData) => {
+/**
+ * 一步到位创建完整的工单初始对象
+ * 消除嵌套函数调用，直接声明所有默认值
+ */
+const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
+  // 1. 系统索引与基础信息
+
+  work_id: sourceOrder.order_id + '_W',
+  work_ver: sourceOrder.order_ver || '',
+  work_unique: sourceOrder.order_id + '_W_' + sourceOrder.order_ver,
+  work_clerk: 'admin',
+  work_audit: '',
+  gongDanLeiXing: '',
+  caiLiao: '',
+  chanPinLeiXing: '',
+  zhiDanShiJian: formatFullTime(new Date()),
+  customer: sourceOrder.customer || '',
+  customerPO: sourceOrder.customerPO || '',
+  productName: sourceOrder.productName || '',
+  chanPinGuiGe: '',
+
+  // 2. 从订单过继的数值字段
+  dingDanShuLiang: sourceOrder.dingDanShuLiang || 0,
+  chuYangShuLiang: sourceOrder.chuYangShuLiang || 0,
+  chaoBiLiShuLiang: sourceOrder.chaoBiLiShuLiang || 0,
+  benChangFangSun: 0,
+  chuYangRiqiRequired: sourceOrder.chuyangRiqiRequired || '',
+  chuHuoRiqiRequired: sourceOrder.chuHuoRiqiRequired || '',
+
+  // 3. 直接初始化中间物料详单的第一行（一步到位）
+  intermedia: [
+    {
+      buJianMingCheng: '',
+      yinShuaYanSe: '',
+      wuLiaoMingCheng: '',
+      pinPai: '',
+      caiLiaoGuiGe: '',
+      FSC: '',
+      kaiShu: 0,
+      shangJiChiCun: '',
+      paiBanMuShu: 0,
+      yinChuShu: 0,
+      yinSun: 0,
+      lingLiaoShu: 0,
+      biaoMianChuLi: '',
+      yinShuaBanShu: 0,
+      shengChanLuJing: '',
+      paiBanFangShi: '',
+      kaiShiRiQi: '',
+      yuQiJieShu: '',
+      dangQianJinDu: 0,
+    },
+  ],
+
+  // 4. 状态与日志
+  workorderstatus: WorkOrderStatus.DRAFT,
+  auditLogs: [],
+  attachments: [],
+})
+
+const handleApprove = async (curOrder: IOrder, curComment: string) => {
   console.log('正在处理审核通过并保存数据...')
   if (isUploading.value) return
   isUploading.value = true
-  // 这里调用你的接口，如 await UpdateOrder(fd)
 
-  if (!selectedOrder.value) return
+  //if (!selectedOrder.value) return
+
+  const newWorkOrder = reactive<IWorkOrder>(createWorkOrderFromOrder(curOrder) as IWorkOrder)
+  curOrder.orderstatus = OrderStatus.APPROVED
+  addAuditLog(curOrder, 'admin')
+
+  const fd = prepareWorkOrderForSubmit(newWorkOrder)
 
   // 关键点：先把 ID 存起来，防止在 await 期间 selectedOrder 被意外清空
-  const targetId = selectedOrder.value.order_unique
+  const targetId = curOrder.order_unique
   if (!targetId) {
     alert('订单唯一标识缺失，无法更新状态')
     return
-  }
-
-  if (selectedOrder.value) {
-    selectedOrder.value.audit = 'admin'
-    selectedOrder.value.auditDate = formatYMD(new Date())
   }
 
   try {
@@ -176,6 +246,14 @@ const handleApprove = async (fd: FormData) => {
 
     await ChangeOrderStatusTo(targetId, OrderStatus.APPROVED)
 
+    await AddOrderAuditInfo(targetId, 'admin', formatYMD(new Date()))
+    const tempLog = (): orderlog => ({
+      time: formatFullTime(new Date()),
+      operator: 'admin',
+      action: 'approve',
+      comment: curComment,
+    })
+    await AddOrderAuditLog(targetId, tempLog())
     fetchOrdersData() // 这里可以刷新列表
   } catch (err) {
     console.error('后端响应错误:', err)
@@ -188,13 +266,13 @@ const handleApprove = async (fd: FormData) => {
 }
 
 // 处理驳回
-const handleReject = async () => {
+const handleReject = async (curOrder: IOrder, curComment: string) => {
   console.log('订单已被驳回')
 
-  if (isUploading.value || !selectedOrder.value) return
+  if (isUploading.value || !curOrder) return
 
   // 关键点：先把 ID 存起来，防止在 await 期间 selectedOrder 被意外清空
-  const targetId = selectedOrder.value.order_unique
+  const targetId = curOrder.order_unique
   if (!targetId) {
     alert('订单唯一标识缺失，无法更新状态')
     return
@@ -202,6 +280,14 @@ const handleReject = async () => {
 
   try {
     await ChangeOrderStatusTo(targetId, OrderStatus.REJECTED)
+    await AddOrderAuditInfo(targetId, 'admin', formatYMD(new Date()))
+    const tempLog = (): orderlog => ({
+      time: formatFullTime(new Date()),
+      operator: 'admin',
+      action: 'reject',
+      comment: curComment,
+    })
+    await AddOrderAuditLog(targetId, tempLog())
   } catch (err) {
     console.error('后端响应错误:', err)
     alert('发送失败，请检查网络或后端服务')

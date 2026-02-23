@@ -1030,78 +1030,6 @@ const removeDetailRow = (index: number) => {
   }
 }
 
-// const loadOrderData = (existingOrder: IOrder) => {
-
-//   // 1. 基础字段拷贝
-
-//   Object.assign(orderData, existingOrder)
-
-//   // 2. 特殊处理附件：确保旧附件能够显示
-
-//   if (existingOrder.attachments) {
-
-//     orderData.attachments = existingOrder.attachments.map((attr) => ({
-
-//       ...attr,
-
-//       // 如果是后端传来的，通常已有 url；如果是本地新加的，会有 file 对象
-
-//       // 这里确保如果是服务器文件，url 是完整的路径
-
-//       url: attr.url || (attr.fileName ? `/api/download/${attr.fileName}` : ''),
-
-//     }))
-
-//   }
-
-//   // 3. 处理日期字符串 (input type="date" 只识别 YYYY-MM-DD)
-
-//   const dateFields = [
-
-//     'xiaZiliaodaiRiqiRequired',
-
-//     'xiaZiliaodaiRiqiPromise',
-
-//     'yinzhangRiqiRequired',
-
-//     'yinzhangRiqiPromise',
-
-//     'zhepaiRiqiRequired',
-
-//     'zhepaiRiqiPromise',
-
-//     'chuyangRiqiRequired',
-
-//     'chuyangRiqiPromise',
-
-//     'chuHuoRiqiRequired',
-
-//     'chuHuoRiqiPromise',
-
-//   ] as const
-
-//   dateFields.forEach((field) => {
-
-//     if (orderData[field]) {
-
-//       // 这里的逻辑是将 Date 对象或 ISO 字符串转换为 YYYY-MM-DD
-
-//       const dateVal = new Date(orderData[field] as any)
-
-//       if (!isNaN(dateVal.getTime())) {
-
-//         ;(orderData[field] as any) = dateVal.toISOString().split('T')[0]
-
-//       }
-
-//     }
-
-//   })
-
-// }
-
-// --- 顶部按钮操作 ---
-
 const handleSaveDraft = () => console.log('保存草稿', orderData)
 
 const handleClose = () => {
@@ -1118,25 +1046,17 @@ const handleClose = () => {
 
 .form-content {
   padding: 20px;
-
   display: flex;
-
   flex-direction: column;
-
   align-items: center;
 }
 
 .order-sheet {
   background: #fff;
-
   width: 100%;
-
   max-width: 1200px;
-
   padding: 40px 60px;
-
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-
   position: relative;
 }
 
@@ -1144,109 +1064,73 @@ const handleClose = () => {
 
 .form-pre-header {
   display: flex;
-
   gap: 24px;
-
   margin-bottom: 12px;
-
   padding: 0 10px;
-
   color: #475569;
 }
 
 .upload-section {
   margin: 10px 0 20px;
-
   padding: 15px;
-
   background: #f8fafc;
-
   border: 1px dashed #cbd5e1;
-
   border-radius: 6px;
 }
 
 .upload-editor {
   display: flex;
-
   align-items: center;
-
   gap: 15px;
 }
 
 .section-label {
   font-weight: 800;
-
   color: #1e293b;
-
   font-size: 13px;
-
   border-left: 4px solid #2563eb;
-
   padding-left: 10px;
 }
 
 .attachment-display-area {
   display: flex;
-
   flex-wrap: wrap;
-
   gap: 10px;
-
   margin-top: 15px;
 }
 
 .attachment-card {
   display: flex;
-
   align-items: center;
-
   background: #fff;
-
   border: 1px solid #2563eb;
-
   padding: 4px 10px;
-
   border-radius: 4px;
-
   box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
 }
 
 .card-category {
   color: #2563eb;
-
   font-weight: 700;
-
   font-size: 12px;
-
   margin-right: 6px;
 }
 
 .card-filename {
   color: #334155;
-
   font-size: 12px;
-
   max-width: 150px;
-
   overflow: hidden;
-
   text-overflow: ellipsis;
-
   white-space: nowrap;
 }
 
 .card-remove-btn {
   border: none;
-
   background: none;
-
   color: #94a3b8;
-
   font-size: 16px;
-
   margin-left: 8px;
-
   cursor: pointer;
 }
 
@@ -1258,34 +1142,24 @@ const handleClose = () => {
 
 .production-table {
   width: 100%;
-
   border-collapse: collapse;
-
   table-layout: fixed;
-
   margin-top: 10px;
 }
 
 .production-table td,
 .production-table th {
   border: 1px solid #000;
-
   padding: 6px;
-
   font-size: 13px;
-
   position: relative;
-
   word-break: break-all;
 }
 
 .label {
   background-color: #f9fafb;
-
   font-weight: 600;
-
   text-align: center;
-
   color: #334155;
 }
 

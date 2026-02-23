@@ -43,11 +43,21 @@
           </thead>
           <tbody>
             <tr v-for="work in processedOrders" :key="work.work_id + work.work_ver">
-              <td>
+              <!-- <td>
                 <span :class="['status-badge', work.workorderstatus]">
                   {{ work.workorderstatus }}
                 </span>
+              </td> -->
+
+              <td>
+                <span
+                  class="status-badge"
+                  :style="{ color: WorkStatusColor[work.workorderstatus] }"
+                >
+                  {{ work.workorderstatus }}
+                </span>
               </td>
+
               <td class="time-text">{{ work.zhiDanShiJian }}</td>
               <td class="bold-text">
                 {{ work.work_id }} <small class="ver-text">v{{ work.work_ver }}</small>
@@ -115,6 +125,7 @@ import {
   formatFullTime,
   prepareWorkOrderForSubmit,
   WorkOrderStatus,
+  WorkStatusColor,
   type IWorkOrder,
 } from '@/types/WorkOrder'
 // 核心：导入你的创建器组件
@@ -146,7 +157,18 @@ const fetchOrdersData = async () => {
 
     // 将拿到的数组赋值给响应式变量 orders
     // processedOrders 会根据这个数据的变化自动重新计算过滤和排序
-    workOrders.value = [...draftWorkOrder, ...myWorkOrder]
+    const combined = [...draftWorkOrder, ...myWorkOrder]
+
+    // 2. 利用 Map 进行去重
+    // 以 order_id 作为 Key，如果 ID 重复，后面的会覆盖前面的
+    const uniqueMap = new Map()
+    combined.forEach((item) => {
+      // 假设唯一标识符是 order_id，如果你的字段名不同请替换
+      uniqueMap.set(item.work_unique, item)
+    })
+
+    // 3. 将 Map 的值转回数组并赋值
+    workOrders.value = Array.from(uniqueMap.values())
 
     console.log('订单加载成功:', draftWorkOrder.length, '条记录')
   } catch (err) {

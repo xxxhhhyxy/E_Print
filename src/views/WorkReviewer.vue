@@ -64,8 +64,17 @@
 
           <tbody>
             <tr v-for="work in processedWorks" :key="work.work_unique">
-              <td>
+              <!-- <td>
                 <span :class="['status-badge', work.workorderstatus]">
+                  {{ work.workorderstatus }}
+                </span>
+              </td> -->
+
+              <td>
+                <span
+                  class="status-badge"
+                  :style="{ color: WorkStatusColor[work.workorderstatus] }"
+                >
                   {{ work.workorderstatus }}
                 </span>
               </td>
@@ -120,6 +129,7 @@ import {
   type IAuditLog,
   type IWorkOrder,
   WorkOrderStatus,
+  WorkStatusColor,
 } from '@/types/WorkOrder'
 import WorkOrderInfo, { PageMode } from './WorkOrderInfo.vue'
 import {

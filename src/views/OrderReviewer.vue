@@ -22,7 +22,7 @@
     <div v-if="!selectedOrder" class="list-container">
       <div class="header-bar">
         <div class="title-group">
-          <h2 class="main-title">{{ currentTab === 'PENDING' ? '待处理任务' : '审核记录' }}</h2>
+          <h2 class="main-title">{{ currentTab === 'PENDING' ? '未审核订单' : '已审核订单' }}</h2>
 
           <div class="search-container">
             <span class="search-icon">🔍</span>
@@ -71,9 +71,15 @@
 
           <tbody>
             <tr v-for="order in processedOrders" :key="order.order_id || Math.random().toString()">
-              <td v-if="currentTab === 'REVIEWED'">
+              <!-- <td v-if="currentTab === 'REVIEWED'">
                 <span :class="['status-badge', order.orderstatus]">
                   {{ order.orderstatus === OrderStatus.APPROVED ? '已通过' : '已驳回' }}
+                </span>
+              </td> -->
+
+              <td v-if="currentTab === 'REVIEWED'">
+                <span class="status-badge" :style="{ color: OrderStatusColor[order.orderstatus] }">
+                  {{ order.orderstatus }}
                 </span>
               </td>
 
@@ -132,7 +138,7 @@ import {
   OrderStatus,
   type IAuditLog as orderlog,
   formatFullTime,
-  addAuditLog,
+  OrderStatusColor,
 } from '@/types/Order'
 import request, {
   AddOrderAuditInfo,
@@ -228,7 +234,6 @@ const handleApprove = async (curOrder: IOrder, curComment: string) => {
 
   const newWorkOrder = reactive<IWorkOrder>(createWorkOrderFromOrder(curOrder) as IWorkOrder)
   curOrder.orderstatus = OrderStatus.APPROVED
-  addAuditLog(curOrder, 'admin')
 
   const fd = prepareWorkOrderForSubmit(newWorkOrder)
 

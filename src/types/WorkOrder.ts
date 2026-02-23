@@ -160,3 +160,14 @@ export const prepareWorkOrderForSubmit = (rawOrder: Partial<IWorkOrder>): FormDa
 
   return formData
 }
+
+// 建立 状态 -> 颜色 的直接映射
+export const WorkStatusColor: Record<WorkOrderStatus, string> = {
+  [WorkOrderStatus.DRAFT]: '#000000', // 灰色
+  [WorkOrderStatus.PENDING_REVIEW]: '#00FFFF', // 橙色
+  [WorkOrderStatus.APPROVED]: '#008800', // 绿色
+  [WorkOrderStatus.REJECTED]: '#FF0000', // 红色
+  [WorkOrderStatus.IN_PRODUCTION]: '#8000ff', // 蓝色
+  [WorkOrderStatus.COMPLETED]: '#000000', // 绿色
+  [WorkOrderStatus.CANCELLED]: '#808080', // 灰色
+}

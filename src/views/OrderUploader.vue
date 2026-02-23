@@ -28,8 +28,8 @@
               <th width="120" @click="handleSort('orderstatus')" class="sortable">
                 状态 {{ getSortIcon('orderstatus') }}
               </th>
-              <th width="200" @click="handleSort('daYinRiqi')" class="sortable">
-                提交时间 {{ getSortIcon('daYinRiqi') }}
+              <th width="200" @click="handleSort('salesDate')" class="sortable">
+                提交时间 {{ getSortIcon('salesDate') }}
               </th>
               <th width="150" @click="handleSort('order_id')" class="sortable">
                 订单号 {{ getSortIcon('order_id') }}
@@ -47,11 +47,11 @@
           <tbody>
             <tr v-for="order in processedOrders" :key="order.order_id">
               <td>
-                <span :class="['status-badge', order.orderstatus]">
-                  {{ statusLabelMap[order.orderstatus] }}
+                <span class="status-badge" :style="{ color: OrderStatusColor[order.orderstatus] }">
+                  {{ order.orderstatus }}
                 </span>
               </td>
-              <td class="time-text">{{ order.daYinRiqi }}</td>
+              <td class="time-text">{{ order.salesDate }}</td>
               <td class="bold-text">{{ order.order_id || '未分配' }}</td>
               <td class="customer-name">{{ order.customer }}</td>
               <td>{{ order.chuHuoRiqiRequired }}</td>
@@ -84,6 +84,7 @@ import {
   addAuditLog,
   formatYMD,
   OrderStatus,
+  OrderStatusColor,
   prepareOrderFormData,
   type IOrder,
 } from '@/types/Order'
@@ -175,23 +176,23 @@ const handleOrderUpload = async (curOrder: IOrder) => {
 
 // --- 列表排序与过滤逻辑 ---
 
-type SortKey = 'orderstatus' | 'daYinRiqi' | 'order_id' | 'customer' | 'chuHuoRiqiRequired'
+type SortKey = 'orderstatus' | 'salesDate' | 'order_id' | 'customer' | 'chuHuoRiqiRequired'
 interface SortConfig {
   key: SortKey
   order: 'asc' | 'desc'
 }
 
-const sortConfig = ref<SortConfig>({ key: 'daYinRiqi', order: 'desc' })
+const sortConfig = ref<SortConfig>({ key: 'salesDate', order: 'desc' })
 
-const statusLabelMap: Record<OrderStatus, string> = {
-  [OrderStatus.DRAFT]: '草稿',
-  [OrderStatus.PENDING_REVIEW]: '待审核',
-  [OrderStatus.APPROVED]: '已通过',
-  [OrderStatus.REJECTED]: '已驳回',
-  [OrderStatus.IN_PRODUCTION]: '生产中',
-  [OrderStatus.COMPLETED]: '已完成',
-  [OrderStatus.CANCELLED]: '已取消',
-}
+// const statusLabelMap: Record<OrderStatus, string> = {
+//   [OrderStatus.DRAFT]: '草稿',
+//   [OrderStatus.PENDING_REVIEW]: '待审核',
+//   [OrderStatus.APPROVED]: '已通过',
+//   [OrderStatus.REJECTED]: '已驳回',
+//   [OrderStatus.IN_PRODUCTION]: '生产中',
+//   [OrderStatus.COMPLETED]: '已完成',
+//   [OrderStatus.CANCELLED]: '已取消',
+// }
 
 const processedOrders = computed<IOrder[]>(() => {
   const q = searchQuery.value.toLowerCase()

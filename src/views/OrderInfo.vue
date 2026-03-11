@@ -61,9 +61,9 @@
           </div>
         </fieldset>
 
-        <fieldset :disabled="props.mode !== PageMode.EDIT" class="upload-section">
+        <!-- <fieldset :disabled="props.mode !== PageMode.EDIT" class="upload-section">
           <div class="upload-editor">
-            <span class="section-label">添加上传文件</span>
+            <span class="section-label">添加其他文件</span>
 
             <div class="control-item">
               <input
@@ -112,8 +112,85 @@
               </button>
             </div>
           </div>
-        </fieldset>
+        </fieldset> -->
+        <fieldset :disabled="props.mode !== PageMode.EDIT" class="upload-section">
+          <div class="upload-row main-upload">
+            <span class="section-label">订单详情</span>
+            <div class="control-item">
+              <input
+                type="file"
+                id="order-pdf-input"
+                class="hidden-input"
+                accept=".pdf"
+                @change="onMainFileBrowse"
+              />
+              <label for="order-pdf-input" class="btn-mini secondary">选择 PDF 文件</label>
+              <span class="file-name-hint" v-if="mainFile.fileName">{{ mainFile.fileName }}</span>
+            </div>
 
+            <div class="button-group">
+              <button
+                class="btn-mini primary"
+                @click="handleCommitMainFile"
+                :disabled="!mainFile.file"
+              >
+                确认上传
+              </button>
+              <button class="btn-mini accent" @click="ParseOrderFile" :disabled="!mainFile.file">
+                AI解析并填充表格
+              </button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="upload-row extra-upload">
+            <span class="section-label">其他附件</span>
+            <div class="control-item">
+              <input
+                type="text"
+                v-model="tempFile.category"
+                placeholder="分类 (如: 分版说明)"
+                class="inline-input medium"
+              />
+            </div>
+            <div class="control-item">
+              <input
+                type="file"
+                id="other-file-input"
+                class="hidden-input"
+                @change="onFileBrowse"
+              />
+              <label for="other-file-input" class="btn-mini secondary">浏览</label>
+              <span class="file-name-hint" v-if="tempFile.fileName">{{ tempFile.fileName }}</span>
+            </div>
+            <button class="btn-mini primary" @click="handleCommitUpload" :disabled="!tempFile.file">
+              添加
+            </button>
+          </div>
+
+          <div v-if="isParsing" class="parsing-overlay">
+            <div class="parsing-card">
+              <div class="loader-spinner"></div>
+              <p>等待服务器解析...</p>
+              <small>正在智能识别订单字段并自动填充表单</small>
+            </div>
+          </div>
+
+          <div class="attachment-display-area" v-if="orderData.attachments?.length">
+            <div
+              v-for="(item, index) in orderData.attachments"
+              :key="index"
+              class="attachment-card"
+            >
+              <div class="card-info">
+                <span class="card-category">[{{ item.category }}]</span>
+                <span class="card-filename">{{ item.fileName }}</span>
+              </div>
+              <button class="card-remove-btn" @click="removeAttachment(index)">×</button>
+            </div>
+          </div>
+        </fieldset>
         <fieldset :disabled="props.mode !== PageMode.EDIT">
           <table class="production-table">
             <thead>
@@ -813,6 +890,72 @@ const createEmptyOrder = (): Partial<IOrder> => ({
 // 2. 初始化 reactive
 const orderData = reactive<IOrder>(createEmptyOrder() as IOrder)
 
+const isParsing = ref(false)
+const mainFile = reactive({
+  category: '订单详情',
+  fileName: '',
+  file: null as File | null,
+})
+
+// 处理主文件选择
+const onMainFileBrowse = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    mainFile.file = target.files[0]
+    mainFile.fileName = target.files[0].name
+  }
+}
+
+// 提交主文件到附件列表
+const handleCommitMainFile = () => {
+  if (mainFile.file) {
+    // 检查是否已存在同名或同类文件，避免重复
+    orderData.attachments = orderData.attachments || []
+    orderData.attachments.push({
+      category: '订单详情',
+      fileName: mainFile.fileName,
+      file: mainFile.file,
+    })
+    // 清空当前选择状态
+    mainFile.file = null
+    mainFile.fileName = ''
+  }
+}
+
+// 核心解析函数
+async function ParseOrderFile() {
+  if (!mainFile.file) return
+
+  try {
+    isParsing.value = true
+
+    // 1. 准备上传数据
+    const formData = new FormData()
+    formData.append('file', mainFile.file)
+
+    // 2. 发起请求 (此处根据你的实际API路径修改)
+    const response = await fetch('/api/order/parse-pdf', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) throw new Error('解析失败')
+
+    const result: IOrder = await response.json()
+
+    // 3. 覆盖数据：将服务器返回的数据合并到当前的 orderData 中
+    // 注意：建议保留 order_id 等关键标识，只覆盖内容
+    Object.assign(orderData, result)
+
+    alert('解析成功，表单已自动填充')
+  } catch (error) {
+    console.error('Parsing error:', error)
+    alert('解析失败，请检查文件格式或手动填写')
+  } finally {
+    isParsing.value = false
+  }
+}
+
 // 3. 彻底重写的重置函数
 const resetToDefault = () => {
   console.log('--- 🧹 正在执行全量重置 ---')
@@ -1462,5 +1605,62 @@ legend {
   padding: 4px 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
+}
+
+.parsing-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.parsing-card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.accent {
+  background-color: #8b5cf6 !important; /* 紫色代表AI或高级功能 */
+  color: white;
+}
+
+.disabled-input {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+}
+
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
 }
 </style>

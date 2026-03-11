@@ -23,8 +23,23 @@ export interface IUser {
   delieve_check: boolean // boolean: 发货/出库记录查看权限
   delieve_edit: boolean // boolean: 发货/出库单据编辑权限
 
+  isSAL: boolean //boolean: 是否能查看销售部页面
+  isPUR: boolean //boolean: 是否能查看采购部页面
+  isOUT: boolean //boolean: 是否能查看外发部页面
+  isMNF: boolean //boolean: 是否能查看生产部页面
+  isADM: boolean //boolean: 是否能查看办公室页面
+
   // ======== 系统辅助字段 ========
   lastLogin?: string // string: 最后登录时间 (yyyy-mm-dd HH:mm:ss)
+}
+
+//部门，确保每个部门的英语首字母不同，SPOMA
+export enum Department {
+  SAL = '销售部',
+  PUR = '采购部',
+  OUT = '外发部',
+  MNF = '生产部',
+  ADM = '办公室',
 }
 
 // export function createUser(input: Pick<IUser, 'fullName' | 'role'> & Partial<IUser>): IUser {

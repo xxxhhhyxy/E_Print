@@ -24,13 +24,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(group, orderId) in groupedOrders" :key="orderId">
-            <td class="bold">{{ orderId }}</td>
+          <tr v-for="(group, inputID) in groupedOrders" :key="inputID">
+            <td class="bold">{{ inputID }}</td>
             <td>{{ group[0]?.customer }}</td>
             <td>
-              <button class="btn-action" @click="openCoordinator(String(orderId), group)">
-                跟单细节
-              </button>
+              <button class="btn-action" @click="openCoordinator(inputID, group)">跟单细节</button>
             </td>
             <td>
               <button class="btn-action" @click="group[0] && openOrder(group[0])">查看订单</button>

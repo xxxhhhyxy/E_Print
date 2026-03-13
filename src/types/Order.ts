@@ -215,11 +215,11 @@ export function prepareOrderFormData(orderData: Partial<IOrder>, salesmanName: s
 
 // 建立 状态 -> 颜色 的直接映射
 export const OrderStatusColor: Record<OrderStatus, string> = {
-  [OrderStatus.DRAFT]: '#909399', // 灰色
-  [OrderStatus.PENDING_REVIEW]: '#E6A23C', // 橙色
-  [OrderStatus.APPROVED]: '#00ff00', // 绿色
-  [OrderStatus.REJECTED]: '#F56C6C', // 红色
-  [OrderStatus.IN_PRODUCTION]: '#409EFF', // 蓝色
-  [OrderStatus.COMPLETED]: '#67C23A', // 绿色
-  [OrderStatus.CANCELLED]: '#909399', // 灰色
+  [OrderStatus.DRAFT]: '#000000', // 灰色
+  [OrderStatus.PENDING_REVIEW]: '#00FFFF', // 橙色
+  [OrderStatus.APPROVED]: '#008800', // 绿色
+  [OrderStatus.REJECTED]: '#FF0000', // 红色
+  [OrderStatus.IN_PRODUCTION]: '#8000ff', // 蓝色
+  [OrderStatus.COMPLETED]: '#000000', // 绿色
+  [OrderStatus.CANCELLED]: '#808080', // 灰色
 }

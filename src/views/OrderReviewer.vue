@@ -314,20 +314,20 @@ onMounted(async () => {
 /**
  * 分别从两个接口获取数据
  */
-async function fetchApprovedOrders() {
-  try {
-    isLoading.value = true
-    // 使用你现有的函数从服务器获取数据
-    const data = await FindOrdersWithStatus(OrderStatus.APPROVED)
 
-    // 赋值给响应式变量
-    // 如果提示类型不匹配，可以使用 data as IOrder[]
-    orders.value = data
-  } catch (error) {
-    console.error('加载订单失败:', error)
-    // 这里可以添加一个 UI 提示，比如 message.error('加载失败')
-  } finally {
-    isLoading.value = false
+const fetchOrdersData = async () => {
+  try {
+    // 逻辑 A: 获取所有待审核订单（不分审单员）
+    const pendingData = await FindOrdersWithStatus(OrderStatus.PENDING_REVIEW)
+    pendingOrdersSource.value = pendingData
+
+    // 逻辑 B: 获取 admin 已经处理过的订单历史
+    const reviewedData = await FindOrdersByAudit('admin')
+    reviewedOrdersSource.value = reviewedData
+
+    console.log('数据同步完成：待审', pendingData.length, '条，已审', reviewedData.length, '条')
+  } catch (err) {
+    console.error('数据获取失败:', err)
   }
 }
 

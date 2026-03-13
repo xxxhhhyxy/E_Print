@@ -28,7 +28,7 @@ export interface IWorkOrder {
   workorderstatus: WorkOrderStatus //订单状态
   auditLogs?: IAuditLog[] // 审批日志：记录“单子是怎么过的” (用于查看审核记录), OrderState不是Audit的时候不再更新
   attachments?: IAttachment[] //创建订单时上传的附件
-
+  // baoZhuangJianShu?:number//包装件数
   //任务集群
   //task_pur?: string[]
   //task_out?: string[]
@@ -65,9 +65,31 @@ export interface IIM {
   paiBanFangShi?: string //排版方式
 
   //表格上没有的
+  //caiGouJianShu?: number //采购件数
   kaiShiRiQi?: string //工序开始日期
   yuQiJieShu?: string //工序预期结束日期
   dangQianJinDu?: number //工序当前进度，由技工手动输入
+}
+
+export const calculateTimeProgress = (item: IIM): number => {
+  // 增加健壮性检查：确保日期字符串存在
+  if (!item.kaiShiRiQi || !item.yuQiJieShu) return 0
+
+  const start: number = new Date(item.kaiShiRiQi).getTime()
+  const end: number = new Date(item.yuQiJieShu).getTime()
+
+  // 2026年当前的实时时间
+  const now: number = Date.now()
+
+  // 边界处理
+  if (now <= start) return 0
+  if (now >= end) return 100
+
+  const total: number = end - start
+  const elapsed: number = now - start
+
+  // 使用 Math.min/max 确保结果严格在 0-100 之间
+  return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)))
 }
 
 /** 附件条目接口 */
@@ -175,4 +197,57 @@ export const WorkStatusColor: Record<WorkOrderStatus, string> = {
   [WorkOrderStatus.IN_PRODUCTION]: '#8000ff', // 蓝色
   [WorkOrderStatus.COMPLETED]: '#000000', // 绿色
   [WorkOrderStatus.CANCELLED]: '#808080', // 灰色
+}
+
+export enum TaskStatus {
+  Ahead = '先于进度',
+  Behind = '落后进度',
+  Late = '超过工期',
+  Done = '已经完成',
+}
+export const TaskStatusColors: Record<TaskStatus, string> = {
+  [TaskStatus.Ahead]: '#1aff00', // 深亮绿 (更适合白底文字)
+  [TaskStatus.Behind]: '#a3a900', // 深黄色/琥珀色
+  [TaskStatus.Late]: '#ff0000', // 红色
+  [TaskStatus.Done]: '#878787', // 灰色
+}
+/**
+ * 根据日期进度和实际进度计算工序状态
+ * @param item 传入的中间物料详单条目
+ * @returns TaskStatus 枚举值
+ */
+export const getTaskStatus = (item: IIM): TaskStatus => {
+  // 1. 首先检查是否完成：只要当前进度达到 100，即为 Done
+  if ((item.dangQianJinDu || 0) >= 100) {
+    return TaskStatus.Done
+  }
+
+  // 获取当前的日期进度 (0-100)
+  const timeProgress = calculateTimeProgress(item)
+
+  // 获取当前时间戳和预期结束时间戳
+  const now = Date.now()
+  const deadline = item.yuQiJieShu ? new Date(item.yuQiJieShu).getTime() : 0
+
+  // 2. 检查是否超过工期：当前时间已超过预期结束日期（且未完成）
+  if (deadline > 0 && now > deadline) {
+    return TaskStatus.Late
+  }
+
+  // 实际填写的进度
+  const actualProgress = item.dangQianJinDu || 0
+
+  // 3. 先于进度：实际进度 > 日期进度
+  if (actualProgress > timeProgress) {
+    return TaskStatus.Ahead
+  }
+
+  // 4. 落后进度：实际进度 < 日期进度，且当前时间还未超过预期结束日期
+  // (由于上面已经拦截了 now > deadline，此处只需判断进度大小)
+  if (actualProgress < timeProgress) {
+    return TaskStatus.Behind
+  }
+
+  // 默认返回（例如两者相等时），可归类为正常或 Behind
+  return TaskStatus.Behind
 }

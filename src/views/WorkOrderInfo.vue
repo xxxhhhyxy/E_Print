@@ -1,6 +1,36 @@
 <template>
   <div class="creator-wrapper">
     <div class="top-nav">
+      <div class="upload-section-main">
+        <div class="upload-row main-upload">
+          <span class="label">PDF 智能导入</span>
+          <div class="control-item">
+            <input
+              type="file"
+              id="order-pdf-input-main"
+              class="hidden-input"
+              accept=".pdf"
+              @change="onMainFileBrowse"
+            />
+            <button class="btn-browse" @click="triggerMainFile">选择 PDF 文件</button>
+            <span class="file-name-text" v-if="mainFile.fileName">{{ mainFile.fileName }}</span>
+          </div>
+
+          <div class="button-group-mini">
+            <button class="btn-send" @click="ParseOrderFile" :disabled="!mainFile.file">
+              AI 解析并填充
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="isParsing" class="parsing-overlay">
+        <div class="parsing-card">
+          <div class="loader-spinner"></div>
+          <p>等待服务器解析...</p>
+          <small>正在智能识别工单字段并自动填充表单</small>
+        </div>
+      </div>
       <div class="left-panel">
         <div class="attachment-manager">
           <div class="manager-header">
@@ -42,6 +72,7 @@
           </table>
         </div>
       </div>
+
       <div class="button-group">
         <button class="btn btn-secondary" @click="$emit('close')">返回列表</button>
         <button
@@ -460,7 +491,55 @@ const removeRow = (index: number) => {
     WorkOrderData.intermedia.splice(index, 1)
   }
 }
+// 1. 定义状态变量
+const isParsing = ref(false)
+const mainFile = reactive({
+  fileName: '',
+  file: null as File | null,
+})
 
+// 2. 触发文件选择
+const triggerMainFile = () => {
+  document.getElementById('order-pdf-input-main')?.click()
+}
+
+// 3. 处理文件选择
+const onMainFileBrowse = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    mainFile.file = target.files[0]
+    mainFile.fileName = target.files[0].name
+  }
+}
+
+// 4. 核心解析函数 (修改 API 路径和数据结构)
+async function ParseOrderFile() {
+  if (!mainFile.file) return
+  try {
+    isParsing.value = true
+    const formData = new FormData()
+    formData.append('file', mainFile.file)
+
+    // 调用你后端的解析接口，此处需确保接口支持 WorkOrder 的解析
+    const response = await fetch('/api/workorder/parse-pdf', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) throw new Error('解析失败')
+
+    const result: IWorkOrder = await response.json()
+
+    // 覆盖数据：将解析结果合并到当前响应式对象中
+    Object.assign(WorkOrderData, result)
+    alert('解析成功，工单已自动填充')
+  } catch (error) {
+    console.error('Parsing error:', error)
+    alert('解析失败，请检查文件格式或手动填写')
+  } finally {
+    isParsing.value = false
+  }
+}
 const addNewRow = () => {
   WorkOrderData.intermedia?.push(createEmptyProcess())
 }
@@ -739,15 +818,14 @@ const handleReject = () => {
   align-items: center;
   justify-content: flex-end;
 }
+/* 生产进度感：绿色调 */
+.production-flow {
+  background: linear-gradient(to right, #10b981, #059669);
+}
 
 /* 时间流逝感：深色调 */
 .time-flow {
   background: linear-gradient(to right, #475569, #0f172a);
-}
-
-/* 生产进度感：绿色调 */
-.production-flow {
-  background: linear-gradient(to right, #10b981, #059669);
 }
 
 .bar-label {
@@ -795,7 +873,48 @@ const handleReject = () => {
   padding: 10px 15px !important; /* 增加 padding 确保不紧贴边框 */
   vertical-align: middle;
 }
+.parsing-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
 
+.parsing-card {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.loader-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 2s linear infinite;
+  margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.hidden-input {
+  display: none;
+}
 .task-item-row {
   display: flex;
   align-items: center;

@@ -103,116 +103,198 @@
         </table>
       </fieldset>
 
-      <fieldset class="table-scroll-container" :disabled="props.mode !== PageMode.EDIT">
-        <table class="standard-table process-table">
-          <thead>
-            <tr class="bg-gray">
-              <th width="40">序号</th>
-              <th>部件名称</th>
-              <th>印刷颜色</th>
-              <th>物料名称</th>
-              <th>品牌</th>
-              <th>规格</th>
-              <th>FSC</th>
-              <th>开数</th>
-              <th>上机尺寸</th>
-              <th>排版模数</th>
-              <th>印出数</th>
-              <th>印损</th>
-              <th>领料数</th>
-              <th>表面处理</th>
-              <th>印刷板数</th>
-              <th>生产路径</th>
-              <th>排版方式</th>
-              <th width="40">操作</th>
-            </tr>
-          </thead>
+      <!-- <table v-if="props.mode == PageMode.PRODUCTION" class="standard-table process-table">
+        <tbody>
+          <tr>
+            <th width="120">部门</th>
+            <th>编辑任务清单</th>
+            <th width="180">操作</th>
+          </tr>
+          <tr>
+            <td class="col-center">采购(PUR)</td>
+            <td class="col-left">
+              <div v-for="(task, index) in purTasks" :key="index" class="task-item-row">
+                <span class="task-index">{{ index + 1 }}.</span>
+                <input v-model="purTasks[index]" placeholder="输入任务项..." class="task-input" />
+                <button class="btn-ctrl add" @click="addItem(purTasks)">+</button>
+                <button class="btn-ctrl del" @click="removeItem(purTasks, index)">-</button>
+              </div>
+            </td>
+            <td class="col-center">
+              <button class="btn-mini" @click="sendTaskToPUR">向采购部发配任务</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="col-center">外发(OUT)</td>
+            <td class="col-left">
+              <div v-for="(task, index) in outTasks" :key="index" class="task-item-row">
+                <span class="task-index">{{ index + 1 }}.</span>
+                <input v-model="outTasks[index]" placeholder="输入任务项..." class="task-input" />
+                <button class="btn-ctrl add" @click="addItem(outTasks)">+</button>
+                <button class="btn-ctrl del" @click="removeItem(outTasks, index)">-</button>
+              </div>
+            </td>
+            <td class="col-center">
+              <button class="btn-mini" @click="sendTaskToOUT">向外发部发配任务</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="col-center">生产(MNF)</td>
+            <td class="col-left">
+              <div v-for="(task, index) in mnfTasks" :key="index" class="task-item-row">
+                <span class="task-index">{{ index + 1 }}.</span>
+                <input v-model="mnfTasks[index]" placeholder="输入任务项..." class="task-input" />
+                <button class="btn-ctrl add" @click="addItem(mnfTasks)">+</button>
+                <button class="btn-ctrl del" @click="removeItem(mnfTasks, index)">-</button>
+              </div>
+            </td>
+            <td class="col-center">
+              <button class="btn-mini" @click="sendTaskToMNF">向生产部发配任务</button>
+            </td>
+          </tr>
+        </tbody>
+      </table> -->
 
-          <tbody
-            v-for="(item, index) in WorkOrderData.intermedia"
-            :key="index"
-            class="process-body"
-          >
-            <tr class="main-params-row">
-              <td class="align-center bg-index">{{ index + 1 }}</td>
-              <td><input v-model="item.buJianMingCheng" /></td>
-              <td><input v-model="item.yinShuaYanSe" /></td>
-              <td><input v-model="item.wuLiaoMingCheng" /></td>
-              <td><input v-model="item.pinPai" /></td>
-              <td><input v-model="item.caiLiaoGuiGe" /></td>
-              <td><input v-model="item.FSC" /></td>
-              <td><input v-model.number="item.kaiShu" type="number" /></td>
-              <td><input v-model="item.shangJiChiCun" /></td>
-              <td><input v-model.number="item.paiBanMuShu" type="number" /></td>
-              <td><input v-model.number="item.yinChuShu" type="number" /></td>
-              <td><input v-model.number="item.yinSun" type="number" /></td>
-              <td><input v-model.number="item.lingLiaoShu" type="number" /></td>
-              <td><input v-model="item.biaoMianChuLi" /></td>
-              <td><input v-model.number="item.yinShuaBanShu" type="number" /></td>
-              <td><input v-model="item.shengChanLuJing" /></td>
-              <td><input v-model="item.paiBanFangShi" /></td>
-              <td class="align-center" v-if="props.mode === PageMode.EDIT">
-                <button class="remove-btn" @click="removeRow(index)">×</button>
-              </td>
-            </tr>
+      <!-- <fieldset class="table-scroll-container" :disabled="props.mode !== PageMode.EDIT"> -->
+      <table class="standard-table process-table">
+        <thead>
+          <tr class="bg-gray">
+            <th width="40">序号</th>
+            <th>部件名称</th>
+            <th>印刷颜色</th>
+            <th>物料名称</th>
+            <th>品牌</th>
+            <th>规格</th>
+            <th>FSC</th>
+            <th>开数</th>
+            <th>上机尺寸</th>
+            <th>排版模数</th>
+            <th>印出数</th>
+            <th>印损</th>
+            <th>领料数</th>
+            <th>表面处理</th>
+            <th>印刷板数</th>
+            <th>生产路径</th>
+            <th>排版方式</th>
+            <th width="40">操作</th>
+          </tr>
+        </thead>
 
-            <tr v-if="mode === PageMode.PRODUCTION">
-              <td></td>
-              <td>开始日期</td>
-              <td><input type="date" v-model="item.kaiShiRiQi" /></td>
-              <td colspan="12" class="progress-td">
-                <div class="progress-track">
-                  <div
-                    class="bar-fill time-flow"
-                    :style="{ width: `${calculateTimeProgress(item)}%` }"
-                  >
-                    <span v-if="calculateTimeProgress(item) > 5" class="bar-label">
-                      {{ calculateTimeProgress(item) }}%
-                    </span>
-                  </div>
-                </div>
-              </td>
-              <td><input type="date" v-model="item.yuQiJieShu" /></td>
-              <td>预计结束</td>
-            </tr>
-            <tr v-if="mode === PageMode.PRODUCTION">
-              <td></td>
-              <td>当前进度</td>
-              <td><input v-model.number="item.dangQianJinDu" />%</td>
-              <td colspan="12" class="progress-td">
-                <div class="progress-track">
-                  <div
-                    class="bar-fill production-flow"
-                    :style="{ width: Math.min(100, Math.max(0, item.dangQianJinDu || 0)) + '%' }"
-                  >
-                    <span v-if="(item.dangQianJinDu || 0) > 5" class="bar-label">
-                      {{ item.dangQianJinDu }}%
-                    </span>
-                  </div>
-                  <!-- <span v-else class="bar-label-outside">{{ item.dangQianJinDu || 0 }}%</span> -->
-                </div>
-              </td>
-              <td colspan="2">
-                <!-- <button
-                  v-if="props.mode === PageMode.PRODUCTION"
-                  @click="syncProgess(WorkOrderData, item)"
+        <tbody v-for="(item, index) in WorkOrderData.intermedia" :key="index" class="process-body">
+          <tr class="main-params-row">
+            <td class="align-center bg-index">{{ index + 1 }}</td>
+            <td>
+              <input v-model="item.buJianMingCheng" :disabled="props.mode !== PageMode.EDIT" />
+            </td>
+            <td><input v-model="item.yinShuaYanSe" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td>
+              <input v-model="item.wuLiaoMingCheng" :disabled="props.mode !== PageMode.EDIT" />
+            </td>
+            <td><input v-model="item.pinPai" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td><input v-model="item.caiLiaoGuiGe" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td><input v-model="item.FSC" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td>
+              <input
+                v-model.number="item.kaiShu"
+                type="number"
+                :disabled="props.mode !== PageMode.EDIT"
+              />
+            </td>
+            <td><input v-model="item.shangJiChiCun" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td>
+              <input
+                v-model.number="item.paiBanMuShu"
+                type="number"
+                :disabled="props.mode !== PageMode.EDIT"
+              />
+            </td>
+            <td>
+              <input
+                v-model.number="item.yinChuShu"
+                type="number"
+                :disabled="props.mode !== PageMode.EDIT"
+              />
+            </td>
+            <td>
+              <input
+                v-model.number="item.yinSun"
+                type="number"
+                :disabled="props.mode !== PageMode.EDIT"
+              />
+            </td>
+            <td>
+              <input
+                v-model.number="item.lingLiaoShu"
+                type="number"
+                :disabled="props.mode !== PageMode.EDIT"
+              />
+            </td>
+            <td><input v-model="item.biaoMianChuLi" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td>
+              <input
+                v-model.number="item.yinShuaBanShu"
+                type="number"
+                :disabled="props.mode !== PageMode.EDIT"
+              />
+            </td>
+            <td>
+              <input v-model="item.shengChanLuJing" :disabled="props.mode !== PageMode.EDIT" />
+            </td>
+            <td><input v-model="item.paiBanFangShi" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td class="align-center" v-if="props.mode === PageMode.EDIT">
+              <button class="remove-btn" @click="removeRow(index)">×</button>
+            </td>
+          </tr>
+
+          <!-- <tr v-if="mode === PageMode.PRODUCTION">
+            <td rowspan="2">外发部</td>
+            <td>开始日期</td>
+            <td><input type="date" v-model="item.kaiShiRiQi" /></td>
+            <td colspan="12" class="progress-td">
+              <div class="progress-track">
+                <div
+                  class="bar-fill time-flow"
+                  :style="{ width: `${calculateTimeProgress(item)}%` }"
                 >
-                  同步进度
-                </button> -->
-              </td>
-              <td></td>
-            </tr>
-          </tbody>
+                  <span v-if="calculateTimeProgress(item) > 5" class="bar-label">
+                    {{ calculateTimeProgress(item) }}%
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td><input type="date" v-model="item.yuQiJieShu" /></td>
+            <td>预计结束</td>
+          </tr> -->
+          <!-- <tr v-if="mode === PageMode.PRODUCTION">
+            <td>当前进度</td>
+            <td><input v-model.number="item.dangQianJinDu" />%</td>
+            <td colspan="12" class="progress-td">
+              <div class="progress-track">
+                <div
+                  class="bar-fill production-flow"
+                  :style="{ width: Math.min(100, Math.max(0, item.dangQianJinDu || 0)) + '%' }"
+                >
+                  <span v-if="(item.dangQianJinDu || 0) > 5" class="bar-label">
+                    {{ item.dangQianJinDu }}%
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td colspan="2">
+            </td>
+            <td></td>
+          </tr> -->
+        </tbody>
 
-          <tfoot>
-            <tr>
-              <td colspan="18" class="add-row-container" v-if="props.mode === PageMode.EDIT">
-                <button class="add-row-full-btn" @click="addNewRow">+ 增加一道生产工序模块</button>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </fieldset>
+        <tfoot>
+          <tr>
+            <td colspan="18" class="add-row-container" v-if="props.mode === PageMode.EDIT">
+              <button class="add-row-full-btn" @click="addNewRow">+ 增加一道生产工序模块</button>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+      <!-- </fieldset> -->
 
       <fieldset
         :disabled="props.mode !== PageMode.REVIEW"
@@ -244,29 +326,32 @@
           </button>
         </div>
       </fieldset>
-
-      <div class="audit-info-footer">
-        <div class="auditlog-related">
-          <div>制单员:</div>
-          <div><input v-model="WorkOrderData.work_clerk" class="cell-input" /></div>
-          <div>时间：</div>
-          <div><input type="date" v-model="WorkOrderData.zhiDanShiJian" class="cell-input" /></div>
-        </div>
-        <div class="auditlog-related">
-          <div>审核员:</div>
-          <div>
-            <input
-              :disabled="props.mode !== PageMode.REVIEW"
-              v-model="WorkOrderData.work_audit"
-              class="cell-input"
-            />
+      <fieldset :disabled="props.mode !== PageMode.EDIT">
+        <div class="audit-info-footer">
+          <div class="auditlog-related">
+            <div>制单员:</div>
+            <div><input v-model="WorkOrderData.work_clerk" class="cell-input" /></div>
+            <div>时间：</div>
+            <div>
+              <input type="date" v-model="WorkOrderData.zhiDanShiJian" class="cell-input" />
+            </div>
           </div>
-          <div>时间：</div>
-          <div>
-            <input :disabled="props.mode !== PageMode.REVIEW" type="date" class="cell-input" />
+          <div class="auditlog-related">
+            <div>审核员:</div>
+            <div>
+              <input
+                :disabled="props.mode !== PageMode.REVIEW"
+                v-model="WorkOrderData.work_audit"
+                class="cell-input"
+              />
+            </div>
+            <div>时间：</div>
+            <div>
+              <input :disabled="props.mode !== PageMode.REVIEW" type="date" class="cell-input" />
+            </div>
           </div>
         </div>
-      </div>
+      </fieldset>
     </section>
   </div>
 </template>
@@ -350,26 +435,6 @@ const createEmptyWorkOrder = (): Partial<IWorkOrder> => ({
   auditLogs: [], // 审批日志：记录“单子是怎么过的” (用于查看审核记录), OrderState不是Audit的时候不再更新
 })
 
-const calculateTimeProgress = (item: IIM): number => {
-  // 增加健壮性检查：确保日期字符串存在
-  if (!item.kaiShiRiQi || !item.yuQiJieShu) return 0
-
-  const start: number = new Date(item.kaiShiRiQi).getTime()
-  const end: number = new Date(item.yuQiJieShu).getTime()
-
-  // 2026年当前的实时时间
-  const now: number = Date.now()
-
-  // 边界处理
-  if (now <= start) return 0
-  if (now >= end) return 100
-
-  const total: number = end - start
-  const elapsed: number = now - start
-
-  // 使用 Math.min/max 确保结果严格在 0-100 之间
-  return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)))
-}
 const WorkOrderData = reactive<IWorkOrder>(createEmptyWorkOrder() as IWorkOrder)
 
 const resetToDefault = () => {
@@ -467,7 +532,7 @@ const handleReject = () => {
     alert('拒绝订单时请填写审核意见')
     return
   }
-  if (!confirm(`确定要通过该工程单吗？`)) return
+  if (!confirm(`确定要驳回该工程单吗？`)) return
   try {
     // 构造审核数据
     const auditPayload = {
@@ -691,5 +756,78 @@ const handleReject = () => {
   padding-right: 5px;
   font-weight: bold;
   white-space: nowrap;
+}
+
+.btn-ctrl {
+  margin-left: 5px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-ctrl.add {
+  background-color: #67c23a;
+  color: white;
+}
+
+.btn-ctrl.del {
+  background-color: #f56c6c;
+  color: white;
+}
+
+.btn-send {
+  background-color: #409eff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* 1. 确保中间列的 TD 容器本身是左对齐 */
+.col-left {
+  text-align: left !important;
+  padding: 10px 15px !important; /* 增加 padding 确保不紧贴边框 */
+  vertical-align: middle;
+}
+
+.task-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* 强制子元素从左对齐 */
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+/* 4. 辅助：强制第一列和最后一列居中 */
+.col-center {
+  text-align: center !important;
+}
+
+/* 关键修正：增加类名权重，覆盖 standard-table input 的居中设置 */
+.process-table .task-input {
+  flex: 1;
+  margin-right: 10px;
+  text-align: left !important; /* 使用 !important 强制覆盖 center */
+  padding: 6px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  min-width: 0;
+  background: #fff; /* 确保背景色不透明，增加对比度 */
+  height: 32px; /* 固定高度 */
+}
+
+/* 行号微调 */
+.task-index {
+  min-width: 25px; /* 改用 min-width 确保空间 */
+  text-align: right;
+  margin-right: 10px;
+  font-family: monospace; /* 等宽字体让行号更整齐 */
+  color: #666;
 }
 </style>

@@ -70,14 +70,11 @@ export const ChangeOrderStatusTo = (orderunique: string, status: OrderStatus) =>
 }
 //添加审核员信息
 export const AddOrderAuditInfo = (orderUnique: string, auditName: string, date: string) => {
-  return (
-    service.post('/orders/addAuditInfo'),
-    {
-      order_unique: orderUnique, //订单索引
-      audit: auditName, //审核员
-      auditDate: date, //审核日期
-    }
-  )
+  return service.post('/orders/addAuditInfo', {
+    order_unique: orderUnique, //订单索引
+    audit: auditName, //审核员
+    auditDate: date, //审核日期
+  })
 }
 //添加审核记录
 export const AddOrderAuditLog = (orderUnique: string, log: orderlog) => {
@@ -130,6 +127,39 @@ export const UpdateProgress = (workId: string, process: number, note: string) =>
 export const AddWorkAuditLog = (workUnique: string, log: worklog) => {
   return service.post('/workOrders/addAuditLog', { work_unique: workUnique, auditLogs: log })
 }
+
+export const AddTask_Pur = (workUnique: string, tasks: string[]) => {
+  return service.post('/workOrders/addTaskPur', {
+    work_unique: workUnique,
+    task_pur: tasks,
+  })
+}
+export const AddTask_Out = (workUnique: string, tasks: string[]) => {
+  return service.post('/workOrders/addTaskOut', {
+    work_unique: workUnique,
+    task_pur: tasks,
+  })
+}
+export const AddTask_Mnf = (workUnique: string, tasks: string[]) => {
+  return service.post('/workOrders/addTaskMnf', {
+    work_unique: workUnique,
+    task_pur: tasks,
+  })
+}
+
+// export interface ITaskResponse {
+//   work_unique: string // 匹配上传时的字段
+//   tasks: string[] // 匹配上传时的字段 (finalTasks)
+// }
+// export const FindTasksPur = (): Promise<ITaskResponse[]> => {
+//   return service.get('/workOrders/pur')
+// }
+// export const FindTasksOUT = (): Promise<ITaskResponse[]> => {
+//   return service.get('/workOrders/out')
+// }
+// export const FindTasksMGF = (): Promise<ITaskResponse[]> => {
+//   return service.get('/workOrders/mnf')
+// }
 
 //添加审核员信息
 export const AddWorkAuditInfo = (workUnique: string, auditName: string, date: string) => {

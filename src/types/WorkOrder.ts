@@ -28,6 +28,11 @@ export interface IWorkOrder {
   workorderstatus: WorkOrderStatus //订单状态
   auditLogs?: IAuditLog[] // 审批日志：记录“单子是怎么过的” (用于查看审核记录), OrderState不是Audit的时候不再更新
   attachments?: IAttachment[] //创建订单时上传的附件
+
+  //任务集群
+  //task_pur?: string[]
+  //task_out?: string[]
+  //task_mfg?: string[]
 }
 
 export enum WorkOrderStatus {

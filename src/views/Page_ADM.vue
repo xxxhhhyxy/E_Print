@@ -20,7 +20,6 @@
             <th>采购进度</th>
             <th>外发进度</th>
             <th>生产进度</th>
-            <th>发货状态</th>
           </tr>
         </thead>
         <tbody>
@@ -41,7 +40,6 @@
                 查看工单
               </button>
             </td>
-            <td class="status-empty">--</td>
             <td class="status-empty">--</td>
             <td class="status-empty">--</td>
             <td class="status-empty">--</td>

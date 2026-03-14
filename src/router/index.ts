@@ -3,7 +3,7 @@ import OrderUploader from '@/views/OrderUploader.vue'
 import WorkUploader from '@/views/WorkUploader.vue'
 import OrderReviewer from '@/views/OrderReviewer.vue'
 import WorkReviewer from '@/views/WorkReviewer.vue'
-// import Page_OUT from '@/views/Page_OUT.vue'
+import Page_OUT from '@/views/Page_OUT.vue'
 import Page_PUR from '@/views/Page_PUR.vue'
 import Page_ADM from '@/views/Page_ADM.vue'
 // import Page_MNF from '@/views/Page_MNF.vue'
@@ -35,11 +35,11 @@ const router = createRouter({
       name: 'page-PUR',
       component: Page_PUR,
     },
-    // {
-    //   path: '/page-OUT', // 浏览器访问的地址
-    //   name: 'page-OUT',
-    //   component: Page_OUT,
-    // },
+    {
+      path: '/page-OUT', // 浏览器访问的地址
+      name: 'page-OUT',
+      component: Page_OUT,
+    },
     // {
     //   path: '/page-MNF', // 浏览器访问的地址
     //   name: 'page-MNF',

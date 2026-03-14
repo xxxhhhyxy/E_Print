@@ -69,6 +69,7 @@ export interface IIM {
   kaiShiRiQi?: string //工序开始日期
   yuQiJieShu?: string //工序预期结束日期
   dangQianJinDu?: number //工序当前进度，由技工手动输入
+  supervisor?: string //工序负责人
 }
 
 export const calculateTimeProgress = (item: IIM): number => {

@@ -41,65 +41,44 @@ export enum Department {
   MNF = '生产部',
   ADM = '办公室',
 }
+/**
+ * 创建一个默认的空用户对象
+ * 用于表单初始化或新用户创建
+ */
+/**
+ * 根据已有的 userId 初始化一个基础用户对象
+ * 确保所有布尔权限默认为 false，防止权限溢出
+ */
+export function initUserWithId(userId: string): IUser {
+  return {
+    userId: userId,
+    username: '',
+    email: '',
+    passwordHash: '',
+    fullName: '新用户',
+    isActive: true,
 
-// export function createUser(input: Pick<IUser, 'fullName' | 'role'> & Partial<IUser>): IUser {
-//   const { fullName, role, ...rest } = input
+    // 默认关闭所有流程权限 (E_Print 系统安全考量)
+    order_submit: false,
+    order_audit: false,
+    work_submit: false,
+    work_audit: false,
 
-//   // 初始化基础字段和默认权限
-//   const user: IUser = {
-//     userId: '',
-//     username: '',
-//     email: '',
-//     passwordHash: '',
-//     fullName,
-//     role,
-//     isActive: true,
+    // 默认关闭所有查看权限
+    order_check: false,
+    work_check: false,
+    pmc_check: false,
+    pmc_edit: false,
 
-//     // 提交 / 审核权限
-//     order_submit: false,
-//     order_audit: false,
-//     work_submit: false,
-//     work_audit: false,
+    // 默认关闭物流权限
+    delieve_check: false,
+    delieve_edit: false,
 
-//     // 查看 / 修改权限
-//     order_check: false,
-//     work_check: false,
-//     pmc_check: false,
-//     pmc_edit: false,
-
-//     // 查看和修改发货
-//     delieve_check: false,
-//     delieve_edit: false,
-
-//     ...rest, // 覆盖额外字段
-//   }
-
-//   // 根据 role 给权限赋值
-//   switch (role) {
-//     case UserRole.Sales:
-//       user.order_submit = true
-//       break
-//     case UserRole.Audit:
-//       user.order_audit = true
-//       user.work_audit = true
-//       break
-//     case UserRole.PMC:
-//       user.pmc_check = true
-//       user.pmc_edit = true
-//       break
-//     case UserRole.Admin:
-//       user.order_submit = true
-//       user.order_audit = true
-//       user.work_submit = true
-//       user.work_audit = true
-//       user.order_check = true
-//       user.work_check = true
-//       user.pmc_check = true
-//       user.pmc_edit = true
-//       user.delieve_check = true
-//       user.delieve_edit = true
-//       break
-//   }
-
-//   return user
-// }
+    // 默认关闭部门页面准入
+    isSAL: false,
+    isPUR: false,
+    isOUT: false,
+    isMNF: false,
+    isADM: false,
+  }
+}

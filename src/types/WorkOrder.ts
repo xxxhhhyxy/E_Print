@@ -26,6 +26,9 @@ export interface IWorkOrder {
 
   //表格上没有的
   workorderstatus: WorkOrderStatus //订单状态
+  zhuangDingJianShu?: number //已经装订的件数
+  head_MNF?: string //生产部负责人
+
   auditLogs?: IAuditLog[] // 审批日志：记录“单子是怎么过的” (用于查看审核记录), OrderState不是Audit的时候不再更新
   attachments?: IAttachment[] //创建订单时上传的附件
   // baoZhuangJianShu?:number//包装件数
@@ -65,11 +68,13 @@ export interface IIM {
   paiBanFangShi?: string //排版方式
 
   //表格上没有的
-  //caiGouJianShu?: number //采购件数
+  yiGouJianShu?: number //number：已经采购的件数，caiGouJianShu/lingLiaoShu=采购进度
+  head_PUR?: string //string: 该工序的采购负责人
+
   kaiShiRiQi?: string //工序开始日期
   yuQiJieShu?: string //工序预期结束日期
   dangQianJinDu?: number //工序当前进度，由技工手动输入
-  supervisor?: string //工序负责人
+  head_OUT?: string //工序负责人
 }
 
 export const calculateTimeProgress = (item: IIM): number => {
@@ -211,6 +216,13 @@ export const TaskStatusColors: Record<TaskStatus, string> = {
   [TaskStatus.Behind]: '#a3a900', // 深黄色/琥珀色
   [TaskStatus.Late]: '#ff0000', // 红色
   [TaskStatus.Done]: '#878787', // 灰色
+}
+//前序任务是否完成，以及当前任务是否分配
+export enum PreStatus {
+  NotReady = '未就绪',
+  NotAssign = '未分配',
+  Assigned = '已分配',
+  Done = '已完成',
 }
 /**
  * 根据日期进度和实际进度计算工序状态

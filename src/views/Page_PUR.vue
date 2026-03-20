@@ -41,12 +41,13 @@
                 <div class="qty-input-group">
                   <input
                     type="number"
-                    v-model.number="yiGouJianShuMap[`${order.work_id}_${idx}`]"
+                    v-model.number="yiGouJianShuMap[`${order.work_unique}_${idx}`]"
                     class="input-mini"
                     placeholder="0"
                   />
                   <span class="divider">/</span>
                   <span class="total-num">{{ item.lingLiaoShu || 0 }}</span>
+                  <button @click="syncPurProgress(order.work_unique, item, idx)">同步</button>
                 </div>
               </td>
 
@@ -54,10 +55,11 @@
                 <span
                   class="status-badge"
                   :style="{
-                    backgroundColor: getPurStatus(order.work_id, idx, item.lingLiaoShu || 0).color,
+                    backgroundColor: getPurStatus(order.work_unique, idx, item.lingLiaoShu || 0)
+                      .color,
                   }"
                 >
-                  {{ getPurStatus(order.work_id, idx, item.lingLiaoShu || 0).text }}
+                  {{ getPurStatus(order.work_unique, idx, item.lingLiaoShu || 0).text }}
                 </span>
               </td>
             </tr>
@@ -74,8 +76,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
-import { FindWorkOrdersWithStatus } from '@/stores/request'
-import { WorkOrderStatus, type IWorkOrder } from '@/types/WorkOrder'
+import { FindWorkOrdersWithStatus, UpdateProgress_Pur } from '@/stores/request'
+import { WorkOrderStatus, type IIM, type IWorkOrder } from '@/types/WorkOrder'
 
 const orderList = ref<IWorkOrder[]>([])
 const isLoading = ref(false)
@@ -108,7 +110,7 @@ const fetchOrders = async () => {
     // 初始化 map (可选：如果想把已有的 dangQianJinDu 作为初始已购数显示)
     orderList.value.forEach((order) => {
       order.intermedia.forEach((item, idx) => {
-        const key = `${order.work_id}_${idx}`
+        const key = `${order.work_unique}_${idx}`
         yiGouJianShuMap[key] = item.dangQianJinDu || 0
       })
     })
@@ -116,7 +118,37 @@ const fetchOrders = async () => {
     isLoading.value = false
   }
 }
+const syncPurProgress = async (workUnique: string, item: IIM, idx: number) => {
+  // 1. 从 map 中获取当前输入的数值
+  const inputKey = `${workUnique}_${idx}`
+  const newQty = yiGouJianShuMap[inputKey]
 
+  // 2. 基础校验
+  if (newQty === undefined || newQty === null) {
+    alert('请输入有效的数量')
+    return
+  }
+
+  try {
+    // 3. 调用后端 API (根据你的 request.ts 逻辑自行替换)
+    // 假设 API 名为 UpdateMaterialPurchaseQty
+    // await UpdateMaterialPurchaseQty({
+    //   work_id: workId,
+    //   itemIndex: idx,
+    //   qty: newQty
+    // })
+
+    // 4. API 成功后，更新本地对象的值，确保界面状态（如进度颜色）同步改变
+    item.yiGouJianShu = newQty
+    await UpdateProgress_Pur(workUnique, idx, newQty)
+    // 弹出简单提示（可选，或者使用消息组件）
+    //console.log(`工单 ${workId} 第 ${idx + 1} 项物料数量已同步为: ${newQty}`)
+    alert('同步成功')
+  } catch (error) {
+    console.error('同步失败:', error)
+    alert('同步失败，请检查网络')
+  }
+}
 onMounted(() => {
   fetchOrders()
 })

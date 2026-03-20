@@ -114,38 +114,88 @@ export const ChangeWorkOrderStatusTo = (workunique: string, status: WorkOrderSta
   })
 }
 
-// 7. 更新工序进度
-export const UpdateProgress = (workId: string, process: number, note: string) => {
-  return service.post('/workOrders/updateProgress', {
-    work_id: workId,
-    process: process, // 对应 float
-    dangQianJinDu: note, // 对应 string
-  })
-}
-
 //添加审核记录
 export const AddWorkAuditLog = (workUnique: string, log: worklog) => {
   return service.post('/workOrders/addAuditLog', { work_unique: workUnique, auditLogs: log })
 }
 
-export const AddTask_Pur = (workUnique: string, tasks: string[]) => {
-  return service.post('/workOrders/addTaskPur', {
+/**
+ * 采购部认领任务/指定负责人
+ * @param workUnique 工程单唯一索引 (work_id + "_" + work_ver)
+ * @param iimID intermedia 数组中的序号 (即 idx)
+ * @param head 负责人姓名 (head_pur)
+ */
+export const AddHead_Pur = (workUnique: string, iimID: number, head: string) => {
+  return service.post('/workOrders/updateHeadPur', {
     work_unique: workUnique,
-    task_pur: tasks,
+    intermediaID: iimID, // 对应你前端传入的 idx,是intermedia的序号
+    head_PUR: head,
   })
 }
-export const AddTask_Out = (workUnique: string, tasks: string[]) => {
-  return service.post('/workOrders/addTaskOut', {
+export const UpdateProgress_Pur = (workUnique: string, iimID: number, progress: number) => {
+  return (
+    service.post('/workOrders/updateProgressPur'),
+    {
+      work_unique: workUnique,
+      intermediaID: iimID,
+      yiGouJianShu: progress,
+    }
+  )
+}
+/**
+ * 外发部认领任务/指定负责人
+ * @param workUnique 工程单唯一索引 (work_id + "_" + work_ver)
+ * @param iimID intermedia 数组中的序号 (即 idx)
+ * @param head 负责人姓名 (head_pur)
+ */
+export const AddHead_Out = (workUnique: string, iimID: number, head: string) => {
+  return service.post('/workOrders/updateHeadOut', {
     work_unique: workUnique,
-    task_pur: tasks,
+    intermediaID: iimID, // 对应你前端传入的 idx,是intermedia的序号
+    head_OUT: head,
   })
 }
-export const AddTask_Mnf = (workUnique: string, tasks: string[]) => {
-  return service.post('/workOrders/addTaskMnf', {
+export const UpdateProgress_Out = (
+  workUnique: string,
+  iimID: number,
+  start: string,
+  end: string,
+  progress: number,
+) => {
+  return (
+    service.post('/workOrders/updateProgressOut'),
+    {
+      work_unique: workUnique,
+      intermediaID: iimID,
+      kaiShiRiQi: start, //工序开始日期
+      yuQiJieShu: end, //工序预期结束日期
+      dangQianJinDu: progress,
+    }
+  )
+}
+
+export const AddHead_Mnf = (workUnique: string, head: string) => {
+  return service.post('/workOrders/updateHeadMnf', {
     work_unique: workUnique,
-    task_pur: tasks,
+    head_MNF: head,
   })
 }
+
+export const UpdateProgress_Mnf = (workUnique: string, progress: number) => {
+  return (
+    service.post('/workOrders/updateProgressMnf'),
+    {
+      work_unique: workUnique,
+      zhuangDingJianShu: progress,
+    }
+  )
+}
+// export const AddHead_Out = (workUnique: string, iimID: number, head: string) => {
+//   return service.post('/workOrder/addHead_Out')
+// }
+// export const AddHead_Mnf = (workUnique: string, iimID: number, head: string) => {
+//   return service.post('/workOrder/addHead_Mnf')
+// }
 
 // export interface ITaskResponse {
 //   work_unique: string // 匹配上传时的字段

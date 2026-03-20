@@ -113,11 +113,24 @@
             <td>{{ item.paiBanFangShi }}</td>
             <td>
               <button
-                :class="['btn-take', item.supervisor ? 'is-taken' : '']"
+                :class="[
+                  'btn-take',
+                  {
+                    'is-ready': getPreStatus(item) === PreStatus.NotAssign,
+                    'is-taken': getPreStatus(item) === PreStatus.Assigned,
+                    'is-not-ready': getPreStatus(item) === PreStatus.NotReady,
+                    'is-done': getPreStatus(item) === PreStatus.Done,
+                  },
+                ]"
                 @click="takeOutTask(order.work_id, item)"
-                :disabled="!!item.supervisor"
+                :disabled="getPreStatus(item) !== PreStatus.NotAssign"
               >
-                {{ item.supervisor || '认领' }}
+                <template v-if="getPreStatus(item) === PreStatus.Assigned">
+                  {{ item.head_OUT }}
+                </template>
+                <template v-else-if="getPreStatus(item) === PreStatus.NotReady"> 未就绪 </template>
+                <template v-else-if="getPreStatus(item) === PreStatus.Done"> 已完成 </template>
+                <template v-else> 认领 </template>
               </button>
             </td>
           </tr>
@@ -130,7 +143,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import { FindWorkOrdersWithStatus } from '@/stores/request'
-import { WorkOrderStatus, type IIM, type IWorkOrder } from '@/types/WorkOrder'
+import { PreStatus, WorkOrderStatus, type IIM, type IWorkOrder } from '@/types/WorkOrder'
 
 const orderList = ref<IWorkOrder[]>([])
 const isLoading = ref(false)
@@ -158,7 +171,7 @@ const fetchOrders = async () => {
 const currentUser = ref({ name: 'admin' })
 const takeOutTask = async (workId: string, item: IIM) => {
   // 1. 如果已有负责人，则拦截
-  if (item.supervisor) return
+  if (item.head_OUT) return
 
   // 2. 交互确认
   const confirmMsg = `工单:${workId}\n加工部件:${item.buJianMingCheng || '未命名'}\n确认认领该任务吗？`
@@ -168,16 +181,38 @@ const takeOutTask = async (workId: string, item: IIM) => {
     // 3. 这里通常会调用 API 同步到后端
     // await PostTakeOutTask({ work_id: workId, buJian: item.buJianMingCheng, user: currentUser.value.name })
 
-    // 4. 前端响应式更新：将当前用户名赋值给 supervisor
-    item.supervisor = currentUser.value.name
+    // 4. 前端响应式更新：将当前用户名赋值给 head_OUT
+    item.head_OUT = currentUser.value.name
 
-    console.log('认领成功，负责人已变更为:', item.supervisor)
+    console.log('认领成功，负责人已变更为:', item.head_OUT)
   } catch (error) {
     console.error('认领失败:', error)
     alert('认领失败，请稍后重试')
   }
 }
+/**
+ * 获取任务的前置状态
+ */
+const getPreStatus = (item: IIM): PreStatus => {
+  // 判定 Done：进度达到100
+  if ((item.dangQianJinDu || 0) >= 100) {
+    return PreStatus.Done
+  }
 
+  // 判定 Assigned：负责人 head_OUT 已存在
+  if (item.head_OUT) {
+    return PreStatus.Assigned
+  }
+
+  // 判定 NotReady：已购数 < 领料数 (物料还没准备好)
+  // 注意：这里需要确保 yiGouJianShu 和 lingLiaoShu 是有效的数值
+  if ((item.yiGouJianShu || 0) < (item.lingLiaoShu || 0)) {
+    return PreStatus.NotReady
+  }
+
+  // 默认判定为 NotAssign：物料齐了且没人领
+  return PreStatus.NotAssign
+}
 onMounted(() => {
   fetchOrders()
 })
@@ -314,5 +349,46 @@ onMounted(() => {
   box-sizing: border-box;
   text-align: center;
   background: transparent;
+}
+
+/* 认领按钮基础样式 */
+.btn-take {
+  min-width: 80px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+/* 1. 未分配 (可交互) - 亮蓝色 */
+.btn-take.is-ready {
+  background-color: #2563eb;
+  color: white;
+}
+
+/* 2. 未就绪 - 红色边框或浅红 */
+.btn-take.is-not-ready {
+  background-color: #fee2e2;
+  color: #ef4444;
+  border-color: #fca5a5;
+  cursor: not-allowed;
+}
+
+/* 3. 已分配 - 灰色背景 */
+.btn-take.is-taken {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* 4. 已完成 - 绿色背景 */
+.btn-take.is-done {
+  background-color: #dcfce7;
+  color: #16a34a;
+  border-color: #86efac;
+  cursor: not-allowed;
 }
 </style>

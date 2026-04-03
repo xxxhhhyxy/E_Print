@@ -159,7 +159,7 @@ const openCoordinator = (id: string, group: IOrder[]) => {
   showCoordinator.value = true
 }
 
-const openWorkOrder = async (id: string, ver: string) => {
+const openWorkOrder = async (id: string, ver: number) => {
   const tempWorkUnique = id + '_W_' + ver
   selectedWork.value = await FindWorkOrderByID(tempWorkUnique)
   showWorkModal.value = true

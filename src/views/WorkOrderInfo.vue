@@ -437,7 +437,7 @@ const createEmptyProcess = (): Partial<IIM> => ({
 
 const createEmptyWorkOrder = (): Partial<IWorkOrder> => ({
   work_id: '',
-  work_ver: '',
+  work_ver: 1,
   work_unique: '', //唯一索引，order审核通过的时候自动创建，work_id+"_"+work_ver
   work_clerk: '',
   clerkDate: '',

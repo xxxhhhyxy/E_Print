@@ -173,7 +173,7 @@ const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
   // 1. 系统索引与基础信息
 
   work_id: sourceOrder.order_id + '_W',
-  work_ver: sourceOrder.order_ver || '',
+  work_ver: sourceOrder.order_ver || 1,
   work_unique: sourceOrder.order_id + '_W_' + sourceOrder.order_ver,
   work_clerk: 'admin',
   work_audit: '',

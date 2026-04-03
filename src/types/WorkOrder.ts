@@ -1,6 +1,6 @@
 export interface IWorkOrder {
   work_id: string //工程单号，order审核通过的时候自动创建,order_id+"_W"
-  work_ver: string //版本号，order审核通过的时候自动创建,和order_ver相同
+  work_ver: number //版本号，order审核通过的时候自动创建,和order_ver相同
   work_unique: string //唯一索引，order审核通过的时候自动创建，work_id+"_"+work_ver
   work_clerk?: string //制单员名称或者工号
   clerkDate?: string //工程单提交日期
@@ -27,6 +27,8 @@ export interface IWorkOrder {
   //表格上没有的
   workorderstatus: WorkOrderStatus //订单状态
   zhuangDingJianShu?: number //已经装订的件数
+  zhuangDingStart?: string //装订开始时间
+  zhuangDingEnd?: string //装订结束时间
   head_MNF?: string //生产部负责人
 
   auditLogs?: IAuditLog[] // 审批日志：记录“单子是怎么过的” (用于查看审核记录), OrderState不是Audit的时候不再更新
@@ -50,6 +52,7 @@ export enum WorkOrderStatus {
 
 //intermediate material
 export interface IIM {
+  intermediaID?: number //这个外发工序在工程单里的序号
   buJianMingCheng?: string //部件名称
   yinShuaYanSe?: string //印刷颜色
   wuLiaoMingCheng?: string //物料名称

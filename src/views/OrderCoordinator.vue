@@ -277,7 +277,7 @@ const showWorkModal = ref(false)
 // 1. 创建一个临时的物料采购数目存储容器
 const tempInputMap = ref<Record<number, number>>({})
 // 2. 状态管理
-const selectedVer = ref('') //选中的版本
+const selectedVer = ref<number>(0) //选中的版本
 // 1. 接收来自 Page_ADM 的参数
 const props = defineProps<{
   inputID: string
@@ -296,7 +296,7 @@ const currentOrder = computed(() => {
   return props.inputGroup.find((o) => o.order_ver === selectedVer.value) || props.inputGroup[0]
 })
 // 定义处理函数
-const OnUpdateDP = async (ver: string) => {
+const OnUpdateDP = async (ver: number) => {
   if (!ver) return
   if (!currentOrder.value) return
   console.log('OnUpdateDP 触发，当前版本:', ver)
@@ -334,7 +334,7 @@ watch(
     // 只有当传入的数组有效且有内容时才操作
     if (newGroup && newGroup.length > 0) {
       // 自动设置默认版本，这会触发 selectedVer 的监听，进而执行 OnUpdateDP
-      selectedVer.value = newGroup[0]?.order_ver || ''
+      selectedVer.value = newGroup[0]?.order_ver || 1
       console.log('数据组已更新，默认版本设为:', selectedVer.value)
       OnUpdateDP(selectedVer.value)
     }

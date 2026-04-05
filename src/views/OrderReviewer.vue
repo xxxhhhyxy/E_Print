@@ -169,14 +169,71 @@ const sortConfig = ref<{ key: SortKey; order: 'asc' | 'desc' }>({
  * 一步到位创建完整的工单初始对象
  * 消除嵌套函数调用，直接声明所有默认值
  */
-const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
-  // 1. 系统索引与基础信息
 
+// const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
+//   // 1. 系统索引与基础信息
+
+//   work_id: sourceOrder.order_id + '_W',
+//   work_ver: sourceOrder.order_ver || 1,
+//   work_unique: sourceOrder.order_id + '_W_' + sourceOrder.order_ver,
+//   work_clerk: 'admin',
+//   work_audit: '',
+//   gongDanLeiXing: '',
+//   caiLiao: '',
+//   chanPinLeiXing: '',
+//   zhiDanShiJian: formatFullTime(new Date()),
+//   customer: sourceOrder.customer || '',
+//   customerPO: sourceOrder.customerPO || '',
+//   productName: sourceOrder.productName || '',
+//   chanPinGuiGe: '',
+
+//   // 2. 从订单过继的数值字段
+//   dingDanShuLiang: sourceOrder.dingDanShuLiang || 0,
+//   chuYangShuLiang: sourceOrder.chuYangShuLiang || 0,
+//   chaoBiLiShuLiang: sourceOrder.chaoBiLiShuLiang || 0,
+//   benChangFangSun: 0,
+//   chuYangRiqiRequired: sourceOrder.chuyangRiqiRequired || '',
+//   chuHuoRiqiRequired: sourceOrder.chuHuoRiqiRequired || '',
+
+//   // 3. 直接初始化中间物料详单的第一行（一步到位）
+//   intermedia: [
+//     {
+//       buJianMingCheng: '',
+//       yinShuaYanSe: '',
+//       wuLiaoMingCheng: '',
+//       pinPai: '',
+//       caiLiaoGuiGe: '',
+//       FSC: '',
+//       kaiShu: 0,
+//       shangJiChiCun: '',
+//       paiBanMuShu: 0,
+//       yinChuShu: 0,
+//       yinSun: 0,
+//       lingLiaoShu: 0,
+//       biaoMianChuLi: '',
+//       yinShuaBanShu: 0,
+//       shengChanLuJing: '',
+//       paiBanFangShi: '',
+//       kaiShiRiQi: '',
+//       yuQiJieShu: '',
+//       dangQianJinDu: 0,
+//     },
+//   ],
+
+//   // 4. 状态与日志
+//   workorderstatus: WorkOrderStatus.DRAFT,
+//   auditLogs: [],
+//   attachments: [],
+// })
+const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
+  // --- 接口定义的顺序 ---
   work_id: sourceOrder.order_id + '_W',
   work_ver: sourceOrder.order_ver || 1,
   work_unique: sourceOrder.order_id + '_W_' + sourceOrder.order_ver,
-  work_clerk: 'admin',
+  work_clerk: 'admin', // 默认制单员
+  clerkDate: formatYMD(new Date()), // 工程单提交日期
   work_audit: '',
+  auditDate: '',
   gongDanLeiXing: '',
   caiLiao: '',
   chanPinLeiXing: '',
@@ -184,9 +241,9 @@ const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
   customer: sourceOrder.customer || '',
   customerPO: sourceOrder.customerPO || '',
   productName: sourceOrder.productName || '',
-  chanPinGuiGe: '',
+  chanPinGuiGe: '', // 对应接口中的“产品规格/页面大小”
 
-  // 2. 从订单过继的数值字段
+  // 2. 从 Order 过继的数值
   dingDanShuLiang: sourceOrder.dingDanShuLiang || 0,
   chuYangShuLiang: sourceOrder.chuYangShuLiang || 0,
   chaoBiLiShuLiang: sourceOrder.chaoBiLiShuLiang || 0,
@@ -194,9 +251,10 @@ const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
   chuYangRiqiRequired: sourceOrder.chuyangRiqiRequired || '',
   chuHuoRiqiRequired: sourceOrder.chuHuoRiqiRequired || '',
 
-  // 3. 直接初始化中间物料详单的第一行（一步到位）
+  // 3. 中间物料详单 (IIM) 数组初始化
   intermedia: [
     {
+      intermediaID: 1, // 初始序号
       buJianMingCheng: '',
       yinShuaYanSe: '',
       wuLiaoMingCheng: '',
@@ -213,16 +271,28 @@ const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
       yinShuaBanShu: 0,
       shengChanLuJing: '',
       paiBanFangShi: '',
+
+      // IIM 生产/采购追踪字段
+      yiGouJianShu: 0,
+      head_PUR: '',
       kaiShiRiQi: '',
       yuQiJieShu: '',
       dangQianJinDu: 0,
+      head_OUT: '',
     },
   ],
 
-  // 4. 状态与日志
+  // 4. 生产进度与系统状态
   workorderstatus: WorkOrderStatus.DRAFT,
+  zhuangDingJianShu: 0,
+  zhuangDingStart: '',
+  zhuangDingEnd: '',
+  head_MNF: '', // 生产部负责人
+
+  // 5. 日志与附件
   auditLogs: [],
-  attachments: [],
+  // 自动继承原订单的附件（深拷贝以断开引用）
+  attachments: sourceOrder.attachments ? JSON.parse(JSON.stringify(sourceOrder.attachments)) : [],
 })
 
 const handleApprove = async (curOrder: IOrder, curComment: string) => {

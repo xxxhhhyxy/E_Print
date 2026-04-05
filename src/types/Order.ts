@@ -56,7 +56,7 @@ export interface IOrder {
   chuHuoRiqiRequired?: string //出货日期要求
   chuHuoRiqiPromise?: string //出货日期承诺
   yongTu?: string //用途
-  keLaiXinxi?: string //客来信息
+  keLaiXinXi?: string //客来信息
 
   //产品明细
   chanPinMingXi?: IProduct[] //产品明细

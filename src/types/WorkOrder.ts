@@ -158,40 +158,37 @@ export function addAuditLog(orderData: Partial<IWorkOrder>): void {
 /**
  * 将工单数据和附件封装为 FormData 格式（严格类型版）
  */
+/**
+ * 准备工单提交数据（纯净打包版）
+ * 不再对 intermedia 进行任何清洗，保留原始数组结构发送至后端
+ */
 export const prepareWorkOrderForSubmit = (rawOrder: Partial<IWorkOrder>): FormData => {
   const formData = new FormData()
 
-  // 1. 处理文件附件
+  // 1. 处理文件附件 (只将真实的 File 对象加入 FormData)
   rawOrder.attachments?.forEach((attr) => {
-    if (attr.file) {
-      // 将文件加入 FormData，后端通常通过 'files' 键接收
+    if (attr.file instanceof File) {
       formData.append('files', attr.file)
     }
   })
 
-  // 2. 深度克隆业务数据（为了不修改 UI 层的数据）
+  // 2. 深度克隆数据，避免直接修改 UI 绑定的响应式对象
   const orderCopy = JSON.parse(JSON.stringify(rawOrder)) as IWorkOrder
 
-  // 3. 清洗数据：移除附件中的 File 对象（因为 File 不能被序列化为 JSON）
+  // 3. 必须清理：从 JSON 结构中移除 File 引用
+  // 因为 JSON.stringify 无法处理 File 对象，且我们已经在第一步将文件流分开了
   if (orderCopy.attachments) {
     orderCopy.attachments = orderCopy.attachments.map((attr) => ({
       category: attr.category,
       fileName: attr.fileName,
-      url: attr.url, // 保留已有的 URL，去掉 file 实体
+      url: attr.url,
     }))
   }
 
-  // 4. 清洗中间物料详单 (过滤掉空行)
-  if (orderCopy.intermedia && Array.isArray(orderCopy.intermedia)) {
-    orderCopy.intermedia = orderCopy.intermedia.filter((item: IIM): boolean => {
-      const hasComponent = !!(item.buJianMingCheng && item.buJianMingCheng.trim())
-      const hasMaterial = !!(item.wuLiaoMingCheng && item.wuLiaoMingCheng.trim())
-      return hasComponent || hasMaterial
-    })
-  }
+  // 4. 【已移除清洗逻辑】
+  // intermedia 将保持原样（包括你初始化的那个空行或用户填写的任何内容）
 
-  // 5. 【关键缺失】：将清洗后的 JSON 数据也塞进 FormData
-  // 后端通常需要从 'orderData' 字段解析字符串化的 JSON
+  // 5. 将完整的业务对象序列化并追加
   formData.append('workOrderData', JSON.stringify(orderCopy))
 
   return formData

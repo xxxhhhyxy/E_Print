@@ -56,7 +56,7 @@ export interface IOrder {
   chuHuoRiqiRequired?: string //出货日期要求
   chuHuoRiqiPromise?: string //出货日期承诺
   yongTu?: string //用途
-  keLaiXinXi?: string //客来信息
+  keLaiXinxi?: string //客来信息
 
   //产品明细
   chanPinMingXi?: IProduct[] //产品明细
@@ -166,7 +166,7 @@ export function addAuditLog(orderData: Partial<IOrder>, operatorName: string): v
 
 export function prepareOrderFormData(orderData: Partial<IOrder>, salesmanName: string): FormData {
   const formData = new FormData()
-  orderData.salesDate = formatFullTime(new Date())
+  //orderData.salesDate = formatFullTime(new Date())
   // 1. 附件二进制
   orderData.attachments?.forEach((attr) => {
     if (attr.file) formData.append('files', attr.file)

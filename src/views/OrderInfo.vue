@@ -795,16 +795,23 @@ const salesman = ref('admin')
 // 一个简单的重置函数，防止新建订单时残留上一次的数据
 // 定义一个符合 IOrder 接口的完整空模板
 const createEmptyOrder = (): Partial<IOrder> => ({
-  // 基础信息
+  // --- 1. 基础识别与管理字段 ---
   order_id: '',
+  order_ver: 1,
+  order_unique: '',
   customer: '',
-  sales: 'admin',
+  sales: '',
+  salesDate: '', // 提交时间：初始化为空，提交时由 handleOrderUpload 赋值
+  audit: '',
+  auditDate: '',
+
+  // --- 2. 外销与安全要求 ---
   cpcQueRen: false,
   waixiaoFlag: false,
   cpsiaYaoqiu: false,
   dingZhiBeiZhu: '',
 
-  // 产品基本信息
+  // --- 3. 产品基本信息 ---
   productName: '',
   jiuBianMa: '',
   isbn: '',
@@ -818,8 +825,9 @@ const createEmptyOrder = (): Partial<IOrder> => ({
   fenBanShuoMing: '',
   baoLiuQianSe: '',
 
+  // --- 4. 订单数量及规格 ---
   // 数量与规格
-  dingDanShuLiang: 0,
+  dingDanShuLiang: 0, //订单数量
   chuYangShuLiang: 0,
   chaoBiLiShuLiang: 0,
   teShuLiuYangZhang: 0,
@@ -832,23 +840,22 @@ const createEmptyOrder = (): Partial<IOrder> => ({
   guigeKuanMm: 0,
   guigeHouMm: 0,
   genSeZhiShi: '',
-  yongTu: '', // 👈 你的“醉酒”坑位在这里！
+
+  // --- 6. 工序日期要求 (Required & Promise) ---
+  xiaZiliaodaiRiqiRequired: '', //下资料袋要求
+  xiaZiliaodaiRiqiPromise: '', //下资料袋承诺
+  yinzhangRiqiRequired: '', //印章日期要求
+  yinzhangRiqiPromise: '', //印章日期承诺
+  zhepaiRiqiRequired: '', //折牌日期要求
+  zhepaiRiqiPromise: '', //折牌日期承诺
+  chuyangRiqiRequired: '', //出样日期要求
+  chuyangRiqiPromise: '', //出样日期承诺
+  chuHuoShuLiang: 0,
+  chuHuoRiqiRequired: '', //出货日期要求
+  chuHuoRiqiPromise: '', //出货日期承诺
+  yongTu: '', // 你的“醉酒”坑位在这里！
   keLaiXinxi: '',
 
-  // 排期信息 (全部初始化为空字符串，方便 date input 绑定)
-  xiaZiliaodaiRiqiRequired: '',
-  xiaZiliaodaiRiqiPromise: '',
-  yinzhangRiqiRequired: '',
-  yinzhangRiqiPromise: '',
-  zhepaiRiqiRequired: '',
-  zhepaiRiqiPromise: '',
-  chuyangRiqiRequired: '',
-  chuyangRiqiPromise: '',
-  chuHuoRiqiRequired: '',
-  chuHuoRiqiPromise: '',
-  chuHuoShuLiang: 0,
-
-  // 明细与备注
   chanPinMingXi: [
     {
       neiWen: '',
@@ -867,8 +874,10 @@ const createEmptyOrder = (): Partial<IOrder> => ({
       beiZhu: '',
     },
   ],
+
   fuLiaoShuoMing: '',
   chanPinMingXiTeBieShuoMing: '',
+  fenBanShuoMing2: '',
   wuLiaoShuoMing: '',
   yinShuaGenSeYaoQiu: '',
   zhuangDingShouGongYaoQiu: '',
@@ -881,11 +890,112 @@ const createEmptyOrder = (): Partial<IOrder> => ({
   yangPinPingShenXinXi: '',
   dingDanPingShenXinXi: '',
 
+  yeWuDaiBiaoFenJi: '', //业务代表/分机
+  yeWuRiqi: '', //业务日期
+  shenHeRen: '', //审核人
+  shenHeRiqi: '', //审核日期
+  daYinRen: '', //打印人
+  daYinRiqi: '', //打印日期
+
+  //表格上没有的
+
   // 状态与附件
   orderstatus: OrderStatus.DRAFT,
   attachments: [],
   auditLogs: [],
 })
+// const createEmptyOrder = (): Partial<IOrder> => ({
+//   // 基础信息
+//   order_id: '',
+//   customer: '',
+//   sales: 'admin',
+//   cpcQueRen: false,
+//   waixiaoFlag: false,
+//   cpsiaYaoqiu: false,
+//   dingZhiBeiZhu: '',
+
+//   // 产品基本信息
+//   productName: '',
+//   jiuBianMa: '',
+//   isbn: '',
+//   customerPO: '',
+//   baoJiaDanHao: '',
+//   xiLieDanMing: '',
+//   qiTaShiBie: '',
+//   chanPinDaLei: '',
+//   ziLeiXing: '',
+//   fscType: '',
+//   fenBanShuoMing: '',
+//   baoLiuQianSe: '',
+
+//   // 数量与规格
+//   dingDanShuLiang: 0,
+//   chuYangShuLiang: 0,
+//   chaoBiLiShuLiang: 0,
+//   teShuLiuYangZhang: 0,
+//   beiPinShuLiang: 0,
+//   teShuLiuShuYang: 0,
+//   zongShuLiang: 0,
+//   chuYangShuoMing: 0,
+//   zhuangDingFangShi: '',
+//   guigeGaoMm: 0,
+//   guigeKuanMm: 0,
+//   guigeHouMm: 0,
+//   genSeZhiShi: '',
+//   yongTu: '', // 👈 你的“醉酒”坑位在这里！
+//   keLaiXinxi: '',
+
+//   // 排期信息 (全部初始化为空字符串，方便 date input 绑定)
+//   xiaZiliaodaiRiqiRequired: '',
+//   xiaZiliaodaiRiqiPromise: '',
+//   yinzhangRiqiRequired: '',
+//   yinzhangRiqiPromise: '',
+//   zhepaiRiqiRequired: '',
+//   zhepaiRiqiPromise: '',
+//   chuyangRiqiRequired: '',
+//   chuyangRiqiPromise: '',
+//   chuHuoRiqiRequired: '',
+//   chuHuoRiqiPromise: '',
+//   chuHuoShuLiang: 0,
+
+//   // 明细与备注
+//   chanPinMingXi: [
+//     {
+//       neiWen: '',
+//       yongZhiChiCun: '',
+//       houDu: 0,
+//       keZhong: 0,
+//       chanDi: '',
+//       pinPai: '',
+//       zhiLei: '',
+//       FSC: '',
+//       yeShu: 0,
+//       yinSe: '',
+//       zhuanSe: '',
+//       biaoMianChuLi: '',
+//       zhuangDingGongYi: '',
+//       beiZhu: '',
+//     },
+//   ],
+//   fuLiaoShuoMing: '',
+//   chanPinMingXiTeBieShuoMing: '',
+//   wuLiaoShuoMing: '',
+//   yinShuaGenSeYaoQiu: '',
+//   zhuangDingShouGongYaoQiu: '',
+//   qiTa: '',
+//   zhiLiangYaoQiu: '',
+//   keHuFanKui: '',
+//   teShuYaoQiu: '',
+//   kongZhiFangFa: '',
+//   dingDanTeBieShuoMing: '',
+//   yangPinPingShenXinXi: '',
+//   dingDanPingShenXinXi: '',
+
+//   // 状态与附件
+//   orderstatus: OrderStatus.DRAFT,
+//   attachments: [],
+//   auditLogs: [],
+// })
 
 // 2. 初始化 reactive
 const orderData = reactive<IOrder>(createEmptyOrder() as IOrder)
@@ -925,35 +1035,6 @@ const handleCommitMainFile = () => {
 // 核心解析函数
 async function ParseOrderFile() {
   if (!mainFile.file) return
-
-  try {
-    isParsing.value = true
-
-    // 1. 准备上传数据
-    const formData = new FormData()
-    formData.append('file', mainFile.file)
-
-    // 2. 发起请求 (此处根据你的实际API路径修改)
-    const response = await fetch('/api/order/parse-pdf', {
-      method: 'POST',
-      body: formData,
-    })
-
-    if (!response.ok) throw new Error('解析失败')
-
-    const result: IOrder = await response.json()
-
-    // 3. 覆盖数据：将服务器返回的数据合并到当前的 orderData 中
-    // 注意：建议保留 order_id 等关键标识，只覆盖内容
-    Object.assign(orderData, result)
-
-    alert('解析成功，表单已自动填充')
-  } catch (error) {
-    console.error('Parsing error:', error)
-    alert('解析失败，请检查文件格式或手动填写')
-  } finally {
-    isParsing.value = false
-  }
 }
 
 // 3. 彻底重写的重置函数

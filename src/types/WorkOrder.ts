@@ -162,38 +162,74 @@ export function addAuditLog(orderData: Partial<IWorkOrder>): void {
  * 准备工单提交数据（纯净打包版）
  * 不再对 intermedia 进行任何清洗，保留原始数组结构发送至后端
  */
+/**
+ * 准备工单提交数据
+ * 既保证了对象的完整性，又通过类型断言对特定日期字段进行了强制格式化
+ */
 export const prepareWorkOrderForSubmit = (rawOrder: Partial<IWorkOrder>): FormData => {
   const formData = new FormData()
 
-  // 1. 处理文件附件 (只将真实的 File 对象加入 FormData)
+  // 1. 处理文件附件流 (保持不变)
   rawOrder.attachments?.forEach((attr) => {
     if (attr.file instanceof File) {
       formData.append('files', attr.file)
     }
   })
 
-  // 2. 深度克隆数据，避免直接修改 UI 绑定的响应式对象
+  // 2. 深度克隆数据，确保不影响 UI 绑定的原始对象，并保留 IWorkOrder 的所有字段
+  // 使用 JSON 序列化克隆可以确保嵌套的 intermedia 数组也被完整复制
   const orderCopy = JSON.parse(JSON.stringify(rawOrder)) as IWorkOrder
 
-  // 3. 必须清理：从 JSON 结构中移除 File 引用
-  // 因为 JSON.stringify 无法处理 File 对象，且我们已经在第一步将文件流分开了
+  // 3. 必须清理：从 JSON 结构中移除 File 对象引用 (技术必须)
   if (orderCopy.attachments) {
     orderCopy.attachments = orderCopy.attachments.map((attr) => ({
       category: attr.category,
       fileName: attr.fileName,
-      url: attr.url,
+      url: attr.url || '',
     }))
   }
 
-  // 4. 【已移除清洗逻辑】
-  // intermedia 将保持原样（包括你初始化的那个空行或用户填写的任何内容）
+  // 4. 【按你要求修改：强制类型断言格式化日期】
+  // 列出你希望强制转化为 yyyy-mm-dd 格式的日期字段
+  const dateKeys: (keyof IWorkOrder)[] = [
+    'clerkDate',
+    'auditDate',
+    'zhiDanShiJian',
+    'chuYangRiqiRequired',
+    'chuHuoRiqiRequired',
+    'zhuangDingStart',
+    'zhuangDingEnd',
+  ]
 
-  // 5. 将完整的业务对象序列化并追加
+  dateKeys.forEach((key) => {
+    const value = orderCopy[key]
+    if (value) {
+      // 使用 Object.assign 配合类型断言
+      // 强制认定为 string | Date，并调用 formatYMD 统一格式
+      Object.assign(orderCopy, {
+        [key]: formatYMD(value as string | Date),
+      })
+    }
+  })
+
+  // 5. 特殊处理：如果 intermedia 内部也有日期需要格式化
+  if (orderCopy.intermedia) {
+    orderCopy.intermedia.forEach((item) => {
+      if (item.kaiShiRiQi) {
+        item.kaiShiRiQi = formatYMD(item.kaiShiRiQi as string | Date)
+      }
+      if (item.yuQiJieShu) {
+        item.yuQiJieShu = formatYMD(item.yuQiJieShu as string | Date)
+      }
+    })
+  }
+
+  // 6. 将完整的业务对象序列化并追加
+  // 此时 orderCopy 包含了所有的原始字段，只有指定的日期被格式化了
   formData.append('workOrderData', JSON.stringify(orderCopy))
 
   return formData
 }
-
 // 建立 状态 -> 颜色 的直接映射
 export const WorkStatusColor: Record<WorkOrderStatus, string> = {
   [WorkOrderStatus.DRAFT]: '#000000', // 灰色

@@ -163,55 +163,100 @@ export function addAuditLog(orderData: Partial<IOrder>, operatorName: string): v
   orderData.auditLogs = orderData.auditLogs || []
   orderData.auditLogs.push(firstLog)
 }
-
-export function prepareOrderFormData(orderData: Partial<IOrder>, salesmanName: string): FormData {
+export function prepareOrderFormData(orderData: IOrder, salesmanName: string): FormData {
   const formData = new FormData()
-  //orderData.salesDate = formatFullTime(new Date())
-  // 1. 附件二进制
-  orderData.attachments?.forEach((attr) => {
-    if (attr.file) formData.append('files', attr.file)
-  })
 
-  // 2. 深度清洗 (不影响原数据)
+  // 1. 处理附件二进制文件 (直接从原始 orderData 中提取文件流)
+  if (orderData.attachments && orderData.attachments.length > 0) {
+    orderData.attachments.forEach((attr) => {
+      if (attr.file instanceof File) {
+        formData.append('files', attr.file)
+      }
+    })
+  }
+
+  // 2. 深度克隆数据，确保不影响 UI 响应式对象
   const cleanedPayload = JSON.parse(JSON.stringify(orderData)) as IOrder
 
-  // 3. 日期字段白名单统一清洗
-  const dateFieldKeys: (keyof IOrder)[] = [
-    'xiaZiliaodaiRiqiRequired',
-    'xiaZiliaodaiRiqiPromise',
-    'yinzhangRiqiRequired',
-    'yinzhangRiqiPromise',
-    'zhepaiRiqiRequired',
-    'zhepaiRiqiPromise',
-    'chuyangRiqiRequired',
-    'chuyangRiqiPromise',
-    'chuHuoRiqiRequired',
-    'chuHuoRiqiPromise',
-    'yeWuRiqi',
-    'shenHeRiqi',
-    'daYinRiqi',
-  ]
-
-  dateFieldKeys.forEach((key) => {
-    const value = cleanedPayload[key]
-    if (value) {
-      // 使用类型断言强制认定这个 key 对应的是 string 或 undefined
-      Object.assign(cleanedPayload, { [key]: formatYMD(value as string | Date) })
-    }
-  })
-
-  // 4. 附件元数据脱钩
-  if (orderData.attachments) {
-    cleanedPayload.attachments = orderData.attachments.map((attr) => ({
+  // 3. 附件元数据脱钩 (技术必须：防止 File 对象序列化为 {})
+  if (cleanedPayload.attachments) {
+    cleanedPayload.attachments = cleanedPayload.attachments.map((attr) => ({
       category: attr.category,
       fileName: attr.fileName,
+      url: attr.url || '',
     }))
   }
 
+  // 4. 针对特定的日期字段进行“强制类型断言格式化”
+  // 如果你确实希望对某些 key 执行 formatYMD，可以用这种方式：
+  const targetDateKeys: (keyof IOrder)[] = ['salesDate', 'yeWuRiqi', 'chuHuoRiqiRequired'] // 按需列举
+
+  targetDateKeys.forEach((key) => {
+    const value = cleanedPayload[key]
+    if (value) {
+      // 使用你要求的 Object.assign 和类型断言
+      // 强制认定为 string | Date，并确保最终存入 payload 的是 string 或 undefined
+      Object.assign(cleanedPayload, {
+        [key]: formatYMD(value as string | Date),
+      })
+    }
+  })
+
+  // 5. 完整打包：此时 cleanedPayload 包含了 IOrder 的所有原始字段
   formData.append('orderData', JSON.stringify(cleanedPayload))
   formData.append('salesman', salesmanName)
+
   return formData
 }
+
+// export function prepareOrderFormData(orderData: Partial<IOrder>, salesmanName: string): FormData {
+//   const formData = new FormData()
+//   //orderData.salesDate = formatFullTime(new Date())
+//   // 1. 附件二进制
+//   orderData.attachments?.forEach((attr) => {
+//     if (attr.file) formData.append('files', attr.file)
+//   })
+
+//   // 2. 深度清洗 (不影响原数据)
+//   const cleanedPayload = JSON.parse(JSON.stringify(orderData)) as IOrder
+
+//   // 3. 日期字段白名单统一清洗
+//   const dateFieldKeys: (keyof IOrder)[] = [
+//     'xiaZiliaodaiRiqiRequired',
+//     'xiaZiliaodaiRiqiPromise',
+//     'yinzhangRiqiRequired',
+//     'yinzhangRiqiPromise',
+//     'zhepaiRiqiRequired',
+//     'zhepaiRiqiPromise',
+//     'chuyangRiqiRequired',
+//     'chuyangRiqiPromise',
+//     'chuHuoRiqiRequired',
+//     'chuHuoRiqiPromise',
+//     'yeWuRiqi',
+//     'shenHeRiqi',
+//     'daYinRiqi',
+//   ]
+
+//   dateFieldKeys.forEach((key) => {
+//     const value = cleanedPayload[key]
+//     if (value) {
+//       // 使用类型断言强制认定这个 key 对应的是 string 或 undefined
+//       Object.assign(cleanedPayload, { [key]: formatYMD(value as string | Date) })
+//     }
+//   })
+
+//   // 4. 附件元数据脱钩
+//   if (orderData.attachments) {
+//     cleanedPayload.attachments = orderData.attachments.map((attr) => ({
+//       category: attr.category,
+//       fileName: attr.fileName,
+//     }))
+//   }
+
+//   formData.append('orderData', JSON.stringify(cleanedPayload))
+//   formData.append('salesman', salesmanName)
+//   return formData
+// }
 
 // 建立 状态 -> 颜色 的直接映射
 export const OrderStatusColor: Record<OrderStatus, string> = {

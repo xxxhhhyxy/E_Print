@@ -133,15 +133,13 @@ export const AddHead_Pur = (workUnique: string, iimID: number, head: string) => 
   })
 }
 export const UpdateProgress_Pur = (workUnique: string, iimID: number, progress: number) => {
-  return (
-    service.post('/workOrders/updateProgressPur'),
-    {
-      work_unique: workUnique,
-      intermediaID: iimID,
-      yiGouJianShu: progress,
-    }
-  )
+  return service.post('/workOrders/updateProgressPur', {
+    work_unique: workUnique,
+    intermediaID: iimID,
+    yiGouJianShu: progress,
+  })
 }
+
 /**
  * 外发部认领任务/指定负责人
  * @param workUnique 工程单唯一索引 (work_id + "_" + work_ver)
@@ -162,16 +160,13 @@ export const UpdateProgress_Out = (
   end: string,
   progress: number,
 ) => {
-  return (
-    service.post('/workOrders/updateProgressOut'),
-    {
-      work_unique: workUnique,
-      intermediaID: iimID,
-      kaiShiRiQi: start, //工序开始日期
-      yuQiJieShu: end, //工序预期结束日期
-      dangQianJinDu: progress,
-    }
-  )
+  return service.post('/workOrders/updateProgressOut', {
+    work_unique: workUnique,
+    intermediaID: iimID,
+    kaiShiRiQi: start, //工序开始日期
+    yuQiJieShu: end, //工序预期结束日期
+    dangQianJinDu: progress,
+  })
 }
 
 export const AddHead_Mnf = (workUnique: string, head: string) => {
@@ -182,13 +177,10 @@ export const AddHead_Mnf = (workUnique: string, head: string) => {
 }
 
 export const UpdateProgress_Mnf = (workUnique: string, progress: number) => {
-  return (
-    service.post('/workOrders/updateProgressMnf'),
-    {
-      work_unique: workUnique,
-      zhuangDingJianShu: progress,
-    }
-  )
+  return service.post('/workOrders/updateProgressMnf', {
+    work_unique: workUnique,
+    zhuangDingJianShu: progress,
+  })
 }
 // export const AddHead_Out = (workUnique: string, iimID: number, head: string) => {
 //   return service.post('/workOrder/addHead_Out')
@@ -213,14 +205,11 @@ export const UpdateProgress_Mnf = (workUnique: string, progress: number) => {
 
 //添加审核员信息
 export const AddWorkAuditInfo = (workUnique: string, auditName: string, date: string) => {
-  return (
-    service.post('/workOrders/addAuditInfo'),
-    {
-      work_unique: workUnique, //订单索引
-      work_audit: auditName, //审核员
-      auditDate: date, //审核日期
-    }
-  )
+  return service.post('/workOrders/addAuditInfo', {
+    work_unique: workUnique, //订单索引
+    work_audit: auditName, //审核员
+    auditDate: date, //审核日期
+  })
 }
 
 export default service

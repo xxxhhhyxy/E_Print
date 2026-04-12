@@ -82,7 +82,7 @@
 import { ref, computed, onMounted } from 'vue'
 import {
   addAuditLog,
-  formatYMD,
+  formatFullTime,
   OrderStatus,
   OrderStatusColor,
   prepareOrderFormData,
@@ -158,7 +158,7 @@ const handleOrderUpload = async (curOrder: IOrder) => {
   // 依然在子组件完成日志初始化和数据封装，因为子组件最清楚表单结构
   addAuditLog(curOrder, 'admin')
   curOrder.sales = 'admin'
-  curOrder.salesDate = formatYMD(new Date())
+  curOrder.salesDate = formatFullTime(new Date())
   const fd = prepareOrderFormData(curOrder, 'admin')
 
   try {

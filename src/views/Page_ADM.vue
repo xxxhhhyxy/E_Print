@@ -13,6 +13,7 @@
         <thead>
           <tr>
             <th>订单号</th>
+            <!-- <th>工单状态</th> -->
             <th>客户</th>
             <th>跟单细节</th>
             <th>订单表</th>
@@ -25,6 +26,7 @@
         <tbody>
           <tr v-for="(group, inputID) in groupedOrders" :key="inputID">
             <td class="bold">{{ inputID }}</td>
+            <!-- <td>{{ group[0]?.orderstatus }}</td> -->
             <td>{{ group[0]?.customer }}</td>
             <td>
               <button class="btn-action" @click="openCoordinator(inputID, group)">跟单细节</button>

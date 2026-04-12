@@ -10,7 +10,11 @@
     </header>
 
     <template v-for="order in orderList" :key="order.work_id">
-      <template v-for="(item, idx) in order.intermedia" :key="`${order.work_id}_${idx}`">
+      <div
+        v-for="(item, idx) in order.intermedia"
+        :key="`${order.work_id}_${idx}`"
+        class="item-space"
+      >
         <table class="standard-table">
           <tbody>
             <tr>
@@ -135,7 +139,7 @@
             </td>
           </tr>
         </table>
-      </template>
+      </div>
     </template>
   </div>
 </template>
@@ -390,5 +394,9 @@ onMounted(() => {
   color: #16a34a;
   border-color: #86efac;
   cursor: not-allowed;
+}
+
+.item-space {
+  margin-bottom: 20px; /* 设置你需要的间隔高度 */
 }
 </style>

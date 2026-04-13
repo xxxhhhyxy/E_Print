@@ -47,7 +47,9 @@
             </thead>
             <tbody>
               <tr v-for="(attr, idx) in WorkOrderData.attachments" :key="idx">
-                <td><input v-model="attr.category" placeholder="类型" class="cell-input" /></td>
+                <td>
+                  <input v-model.trim="attr.category" placeholder="类型" class="cell-input" />
+                </td>
                 <td class="file-cell">
                   <div class="file-trigger-wrapper">
                     <input
@@ -98,11 +100,11 @@
           <tbody>
             <tr>
               <td colspan="2" class="bg-gray">工单类型</td>
-              <td><input v-model="WorkOrderData.gongDanLeiXing" /></td>
+              <td><input v-model.trim="WorkOrderData.gongDanLeiXing" /></td>
               <td class="bg-gray">材料</td>
-              <td><input v-model="WorkOrderData.caiLiao" /></td>
+              <td><input v-model.trim="WorkOrderData.caiLiao" /></td>
               <td class="bg-gray">产品类型</td>
-              <td><input v-model="WorkOrderData.chanPinLeiXing" /></td>
+              <td><input v-model.trim="WorkOrderData.chanPinLeiXing" /></td>
               <td class="bg-gray">制单时间</td>
               <td colspan="2"><input type="date" v-model="WorkOrderData.zhiDanShiJian" /></td>
             </tr>
@@ -119,10 +121,10 @@
               <td>出货日期</td>
             </tr>
             <tr>
-              <td><textarea v-model="WorkOrderData.customer"></textarea></td>
-              <td><textarea v-model="WorkOrderData.customerPO"></textarea></td>
-              <td><textarea v-model="WorkOrderData.productName"></textarea></td>
-              <td><textarea v-model="WorkOrderData.chanPinGuiGe"></textarea></td>
+              <td><textarea v-model.trim="WorkOrderData.customer"></textarea></td>
+              <td><textarea v-model.trim="WorkOrderData.customerPO"></textarea></td>
+              <td><textarea v-model.trim="WorkOrderData.productName"></textarea></td>
+              <td><textarea v-model.trim="WorkOrderData.chanPinGuiGe"></textarea></td>
               <td><input type="number" v-model.number="WorkOrderData.dingDanShuLiang" /></td>
               <td><input type="number" v-model.number="WorkOrderData.chuYangShuLiang" /></td>
               <td><input type="number" v-model.number="WorkOrderData.chaoBiLiShuLiang" /></td>
@@ -215,15 +217,19 @@
           <tr class="main-params-row">
             <td class="align-center bg-index">{{ index + 1 }}</td>
             <td>
-              <input v-model="item.buJianMingCheng" :disabled="props.mode !== PageMode.EDIT" />
+              <input v-model.trim="item.buJianMingCheng" :disabled="props.mode !== PageMode.EDIT" />
             </td>
-            <td><input v-model="item.yinShuaYanSe" :disabled="props.mode !== PageMode.EDIT" /></td>
             <td>
-              <input v-model="item.wuLiaoMingCheng" :disabled="props.mode !== PageMode.EDIT" />
+              <input v-model.trim="item.yinShuaYanSe" :disabled="props.mode !== PageMode.EDIT" />
             </td>
-            <td><input v-model="item.pinPai" :disabled="props.mode !== PageMode.EDIT" /></td>
-            <td><input v-model="item.caiLiaoGuiGe" :disabled="props.mode !== PageMode.EDIT" /></td>
-            <td><input v-model="item.FSC" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td>
+              <input v-model.trim="item.wuLiaoMingCheng" :disabled="props.mode !== PageMode.EDIT" />
+            </td>
+            <td><input v-model.trim="item.pinPai" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td>
+              <input v-model.trim="item.caiLiaoGuiGe" :disabled="props.mode !== PageMode.EDIT" />
+            </td>
+            <td><input v-model.trim="item.FSC" :disabled="props.mode !== PageMode.EDIT" /></td>
             <td>
               <input
                 v-model.number="item.kaiShu"
@@ -231,7 +237,9 @@
                 :disabled="props.mode !== PageMode.EDIT"
               />
             </td>
-            <td><input v-model="item.shangJiChiCun" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td>
+              <input v-model.trim="item.shangJiChiCun" :disabled="props.mode !== PageMode.EDIT" />
+            </td>
             <td>
               <input
                 v-model.number="item.paiBanMuShu"
@@ -260,7 +268,9 @@
                 :disabled="props.mode !== PageMode.EDIT"
               />
             </td>
-            <td><input v-model="item.biaoMianChuLi" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td>
+              <input v-model.trim="item.biaoMianChuLi" :disabled="props.mode !== PageMode.EDIT" />
+            </td>
             <td>
               <input
                 v-model.number="item.yinShuaBanShu"
@@ -269,9 +279,11 @@
               />
             </td>
             <td>
-              <input v-model="item.shengChanLuJing" :disabled="props.mode !== PageMode.EDIT" />
+              <input v-model.trim="item.shengChanLuJing" :disabled="props.mode !== PageMode.EDIT" />
             </td>
-            <td><input v-model="item.paiBanFangShi" :disabled="props.mode !== PageMode.EDIT" /></td>
+            <td>
+              <input v-model.trim="item.paiBanFangShi" :disabled="props.mode !== PageMode.EDIT" />
+            </td>
             <td class="align-center" v-if="props.mode === PageMode.EDIT">
               <button class="remove-btn" @click="removeRow(index)">×</button>
             </td>
@@ -280,7 +292,7 @@
           <!-- <tr v-if="mode === PageMode.PRODUCTION">
             <td rowspan="2">外发部</td>
             <td>开始日期</td>
-            <td><input type="date" v-model="item.kaiShiRiQi" /></td>
+            <td><input type="date" v-model.trim="item.kaiShiRiQi" /></td>
             <td colspan="12" class="progress-td">
               <div class="progress-track">
                 <div
@@ -293,7 +305,7 @@
                 </div>
               </div>
             </td>
-            <td><input type="date" v-model="item.yuQiJieShu" /></td>
+            <td><input type="date" v-model.trim="item.yuQiJieShu" /></td>
             <td>预计结束</td>
           </tr> -->
           <!-- <tr v-if="mode === PageMode.PRODUCTION">
@@ -339,7 +351,7 @@
               <td class="label" width="100">审核意见</td>
               <td>
                 <textarea
-                  v-model="auditRemark"
+                  v-model.trim="auditRemark"
                   class="cell-input audit-textarea"
                   placeholder="请输入审核处理意见（如拒绝原因等）..."
                 ></textarea>
@@ -361,7 +373,7 @@
         <div class="audit-info-footer">
           <div class="auditlog-related">
             <div>制单员:</div>
-            <div><input v-model="WorkOrderData.work_clerk" class="cell-input" /></div>
+            <div><input v-model.trim="WorkOrderData.work_clerk" class="cell-input" /></div>
             <div>时间：</div>
             <div>
               <input type="date" v-model="WorkOrderData.zhiDanShiJian" class="cell-input" />
@@ -372,7 +384,7 @@
             <div>
               <input
                 :disabled="props.mode !== PageMode.REVIEW"
-                v-model="WorkOrderData.work_audit"
+                v-model.trim="WorkOrderData.work_audit"
                 class="cell-input"
               />
             </div>

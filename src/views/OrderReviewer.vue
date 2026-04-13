@@ -254,7 +254,7 @@ const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
   // 3. 中间物料详单 (IIM) 数组初始化
   intermedia: [
     {
-      intermediaID: 1, // 初始序号
+      intermediaID: 0, // 初始序号
       buJianMingCheng: '',
       yinShuaYanSe: '',
       wuLiaoMingCheng: '',
@@ -316,7 +316,7 @@ const handleApprove = async (curOrder: IOrder, curComment: string) => {
 
   try {
     await request.post('/workOrders/create', fd)
-    alert('工程单已成功提交审核！')
+    alert('工程单已成功创建！')
     //showCreator.value = false
 
     await ChangeOrderStatusTo(targetId, OrderStatus.APPROVED)

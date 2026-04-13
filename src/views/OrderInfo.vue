@@ -38,7 +38,7 @@
 
             <input
               type="text"
-              v-model="orderData.dingZhiBeiZhu"
+              v-model.trim="orderData.dingZhiBeiZhu"
               placeholder="填写备注..."
               class="inline-input"
             />
@@ -47,14 +47,19 @@
           <div class="control-item">
             <label>业务员</label>
 
-            <input type="text" v-model="salesman" placeholder="姓名" class="inline-input mini" />
+            <input
+              type="text"
+              v-model.trim="salesman"
+              placeholder="姓名"
+              class="inline-input mini"
+            />
           </div>
 
           <div class="control-item">
             <label>版本</label>
             <input
               type="text"
-              v-model="orderData.order_ver"
+              v-model.trim="orderData.order_ver"
               placeholder="版本号"
               class="inline-input mini"
             />
@@ -68,7 +73,7 @@
             <div class="control-item">
               <input
                 type="text"
-                v-model="tempFile.category"
+                v-model.trim="tempFile.category"
                 placeholder="附件: 如订单信息pdf"
                 class="inline-input medium"
               />
@@ -149,7 +154,7 @@
             <div class="control-item">
               <input
                 type="text"
-                v-model="tempFile.category"
+                v-model.trim="tempFile.category"
                 placeholder="分类 (如: 分版说明)"
                 class="inline-input medium"
               />
@@ -215,7 +220,7 @@
               <tr>
                 <td class="label">客户</td>
 
-                <td colspan="3"><input v-model="orderData.customer" class="cell-input" /></td>
+                <td colspan="3"><input v-model.trim="orderData.customer" class="cell-input" /></td>
 
                 <td class="label">订单数量</td>
 
@@ -260,7 +265,11 @@
                 <td rowspan="2" class="label">成品名称</td>
 
                 <td colspan="3" rowspan="2">
-                  <textarea v-model="orderData.productName" class="cell-input" rows="2"></textarea>
+                  <textarea
+                    v-model.trim="orderData.productName"
+                    class="cell-input"
+                    rows="2"
+                  ></textarea>
                 </td>
 
                 <td class="label">超比例数量</td>
@@ -320,7 +329,7 @@
                 <td class="label">订单号</td>
 
                 <td colspan="3">
-                  <textarea v-model="orderData.order_id" class="cell-input"></textarea>
+                  <textarea v-model.trim="orderData.order_id" class="cell-input"></textarea>
                 </td>
 
                 <td class="label">总数量</td>
@@ -343,16 +352,16 @@
               <tr>
                 <td class="label">旧编码</td>
 
-                <td><textarea v-model="orderData.jiuBianMa" class="cell-input"></textarea></td>
+                <td><textarea v-model.trim="orderData.jiuBianMa" class="cell-input"></textarea></td>
 
                 <td class="label">ISBN</td>
 
-                <td><textarea v-model="orderData.isbn" class="cell-input"></textarea></td>
+                <td><textarea v-model.trim="orderData.isbn" class="cell-input"></textarea></td>
 
                 <td class="label">出样说明</td>
 
                 <td colspan="3">
-                  <textarea v-model="orderData.chuYangShuoMing" class="cell-input"></textarea>
+                  <textarea v-model.trim="orderData.chuYangShuoMing" class="cell-input"></textarea>
                 </td>
 
                 <td colspan="2" class="label">出样日期</td>
@@ -369,16 +378,23 @@
               <tr>
                 <td class="label">客户PO</td>
 
-                <td><textarea v-model="orderData.customerPO" class="cell-input"></textarea></td>
+                <td>
+                  <textarea v-model.trim="orderData.customerPO" class="cell-input"></textarea>
+                </td>
 
                 <td class="label">报价单号</td>
 
-                <td><textarea v-model="orderData.baoJiaDanHao" class="cell-input"></textarea></td>
+                <td>
+                  <textarea v-model.trim="orderData.baoJiaDanHao" class="cell-input"></textarea>
+                </td>
 
                 <td class="label">装订方式</td>
 
                 <td colspan="3">
-                  <textarea v-model="orderData.zhuangDingFangShi" class="cell-input"></textarea>
+                  <textarea
+                    v-model.trim="orderData.zhuangDingFangShi"
+                    class="cell-input"
+                  ></textarea>
                 </td>
 
                 <td class="label">出货</td>
@@ -403,7 +419,9 @@
               <tr>
                 <td class="label">系列单名</td>
 
-                <td colspan="3"><input v-model="orderData.xiLieDanMing" class="cell-input" /></td>
+                <td colspan="3">
+                  <input v-model.trim="orderData.xiLieDanMing" class="cell-input" />
+                </td>
 
                 <td rowspan="3" class="label">成品规格</td>
 
@@ -418,14 +436,16 @@
                 <td rowspan="3" colspan="2" class="label">用途</td>
 
                 <td rowspan="3" colspan="2">
-                  <textarea v-model="orderData.yongTu" class="cell-input" rows="3"></textarea>
+                  <textarea v-model.trim="orderData.yongTu" class="cell-input" rows="3"></textarea>
                 </td>
               </tr>
 
               <tr>
                 <td class="label">其他识别</td>
 
-                <td colspan="3"><input v-model="orderData.qiTaShiBie" class="cell-input" /></td>
+                <td colspan="3">
+                  <input v-model.trim="orderData.qiTaShiBie" class="cell-input" />
+                </td>
 
                 <td class="label">宽</td>
 
@@ -439,11 +459,11 @@
               <tr>
                 <td class="label">产品大类</td>
 
-                <td><input v-model="orderData.chanPinDaLei" class="cell-input" /></td>
+                <td><input v-model.trim="orderData.chanPinDaLei" class="cell-input" /></td>
 
                 <td class="label">子类型</td>
 
-                <td><input v-model="orderData.ziLeiXing" class="cell-input" /></td>
+                <td><input v-model.trim="orderData.ziLeiXing" class="cell-input" /></td>
 
                 <td class="label">厚</td>
 
@@ -457,26 +477,30 @@
               <tr>
                 <td colspan="2" class="label">FSC类型</td>
 
-                <td colspan="2"><input v-model="orderData.fscType" class="cell-input" /></td>
+                <td colspan="2"><input v-model.trim="orderData.fscType" class="cell-input" /></td>
 
                 <!-- <td class="label">分版说明</td>
 
-              <td><input v-model="orderData.fenBanShuoMing2" class="cell-input" /></td> -->
+              <td><input v-model.trim="orderData.fenBanShuoMing2" class="cell-input" /></td> -->
 
                 <td class="label">跟色指示</td>
 
-                <td colspan="3"><input v-model="orderData.genSeZhiShi" class="cell-input" /></td>
+                <td colspan="3">
+                  <input v-model.trim="orderData.genSeZhiShi" class="cell-input" />
+                </td>
 
                 <td colspan="2" class="label">客来信息</td>
 
-                <td colspan="2"><input v-model="orderData.keLaiXinxi" class="cell-input" /></td>
+                <td colspan="2">
+                  <input v-model.trim="orderData.keLaiXinxi" class="cell-input" />
+                </td>
               </tr>
 
               <tr>
                 <td colspan="2" class="label">是否需要保留签色</td>
 
                 <td colspan="10">
-                  <textarea v-model="orderData.baoLiuQianSe" class="cell-input"></textarea>
+                  <textarea v-model.trim="orderData.baoLiuQianSe" class="cell-input"></textarea>
                 </td>
               </tr>
             </tbody>
@@ -523,34 +547,34 @@
 
             <tbody>
               <tr v-for="(item, index) in orderData.chanPinMingXi" :key="index" class="dynamic-row">
-                <td><input v-model="item.neiWen" class="cell-input" /></td>
+                <td><input v-model.trim="item.neiWen" class="cell-input" /></td>
 
-                <td><input v-model="item.yongZhiChiCun" class="cell-input" /></td>
+                <td><input v-model.trim="item.yongZhiChiCun" class="cell-input" /></td>
 
-                <td><input v-model="item.houDu" class="cell-input" /></td>
+                <td><input v-model.trim="item.houDu" class="cell-input" /></td>
 
-                <td><input v-model="item.keZhong" class="cell-input" /></td>
+                <td><input v-model.trim="item.keZhong" class="cell-input" /></td>
 
-                <td><input v-model="item.chanDi" class="cell-input" /></td>
+                <td><input v-model.trim="item.chanDi" class="cell-input" /></td>
 
-                <td><input v-model="item.pinPai" class="cell-input" /></td>
+                <td><input v-model.trim="item.pinPai" class="cell-input" /></td>
 
-                <td><input v-model="item.zhiLei" class="cell-input" /></td>
+                <td><input v-model.trim="item.zhiLei" class="cell-input" /></td>
 
-                <td><input v-model="item.FSC" class="cell-input" /></td>
+                <td><input v-model.trim="item.FSC" class="cell-input" /></td>
 
                 <td><input type="number" v-model.number="item.yeShu" class="cell-input" /></td>
 
-                <td><input v-model="item.yinSe" class="cell-input" /></td>
+                <td><input v-model.trim="item.yinSe" class="cell-input" /></td>
 
-                <td><input v-model="item.zhuanSe" class="cell-input" /></td>
+                <td><input v-model.trim="item.zhuanSe" class="cell-input" /></td>
 
-                <td><input v-model="item.biaoMianChuLi" class="cell-input" /></td>
+                <td><input v-model.trim="item.biaoMianChuLi" class="cell-input" /></td>
 
-                <td><input v-model="item.zhuangDingGongYi" class="cell-input" /></td>
+                <td><input v-model.trim="item.zhuangDingGongYi" class="cell-input" /></td>
 
                 <td>
-                  <input v-model="item.beiZhu" class="cell-input" />
+                  <input v-model.trim="item.beiZhu" class="cell-input" />
 
                   <button
                     class="row-delete-action"
@@ -577,7 +601,9 @@
               <tr>
                 <td class="label" width="100">辅料说明</td>
 
-                <td><textarea v-model="orderData.fuLiaoShuoMing" class="cell-input"></textarea></td>
+                <td>
+                  <textarea v-model.trim="orderData.fuLiaoShuoMing" class="cell-input"></textarea>
+                </td>
               </tr>
 
               <tr>
@@ -585,7 +611,7 @@
 
                 <td>
                   <textarea
-                    v-model="orderData.chanPinMingXiTeBieShuoMing"
+                    v-model.trim="orderData.chanPinMingXiTeBieShuoMing"
                     class="cell-input"
                   ></textarea>
                 </td>
@@ -594,20 +620,27 @@
               <tr>
                 <td class="label" width="100">分版说明</td>
 
-                <td><textarea v-model="orderData.fenBanShuoMing" class="cell-input"></textarea></td>
+                <td>
+                  <textarea v-model.trim="orderData.fenBanShuoMing" class="cell-input"></textarea>
+                </td>
               </tr>
 
               <tr>
                 <td class="label" width="100">物料说明</td>
 
-                <td><textarea v-model="orderData.wuLiaoShuoMing" class="cell-input"></textarea></td>
+                <td>
+                  <textarea v-model.trim="orderData.wuLiaoShuoMing" class="cell-input"></textarea>
+                </td>
               </tr>
 
               <tr>
                 <td class="label" width="100">印刷和跟色要求</td>
 
                 <td>
-                  <textarea v-model="orderData.yinShuaGenSeYaoQiu" class="cell-input"></textarea>
+                  <textarea
+                    v-model.trim="orderData.yinShuaGenSeYaoQiu"
+                    class="cell-input"
+                  ></textarea>
                 </td>
               </tr>
 
@@ -616,7 +649,7 @@
 
                 <td>
                   <textarea
-                    v-model="orderData.zhuangDingShouGongYaoQiu"
+                    v-model.trim="orderData.zhuangDingShouGongYaoQiu"
                     class="cell-input"
                   ></textarea>
                 </td>
@@ -625,38 +658,49 @@
               <tr>
                 <td class="label" width="100">其他</td>
 
-                <td><textarea v-model="orderData.qiTa" class="cell-input"></textarea></td>
+                <td><textarea v-model.trim="orderData.qiTa" class="cell-input"></textarea></td>
               </tr>
 
               <tr>
                 <td class="label" width="100">质量要求</td>
 
-                <td><textarea v-model="orderData.zhiLiangYaoQiu" class="cell-input"></textarea></td>
+                <td>
+                  <textarea v-model.trim="orderData.zhiLiangYaoQiu" class="cell-input"></textarea>
+                </td>
               </tr>
 
               <tr>
                 <td class="label" width="100">客户反馈</td>
 
-                <td><textarea v-model="orderData.keHuFanKui" class="cell-input"></textarea></td>
+                <td>
+                  <textarea v-model.trim="orderData.keHuFanKui" class="cell-input"></textarea>
+                </td>
               </tr>
 
               <tr>
                 <td class="label" width="100">特殊要求</td>
 
-                <td><textarea v-model="orderData.teShuYaoQiu" class="cell-input"></textarea></td>
+                <td>
+                  <textarea v-model.trim="orderData.teShuYaoQiu" class="cell-input"></textarea>
+                </td>
               </tr>
 
               <tr>
                 <td class="label" width="100">控制方法</td>
 
-                <td><textarea v-model="orderData.kongZhiFangFa" class="cell-input"></textarea></td>
+                <td>
+                  <textarea v-model.trim="orderData.kongZhiFangFa" class="cell-input"></textarea>
+                </td>
               </tr>
 
               <tr>
                 <td class="label" width="100">订单特别说明</td>
 
                 <td>
-                  <textarea v-model="orderData.dingDanTeBieShuoMing" class="cell-input"></textarea>
+                  <textarea
+                    v-model.trim="orderData.dingDanTeBieShuoMing"
+                    class="cell-input"
+                  ></textarea>
                 </td>
               </tr>
 
@@ -664,7 +708,10 @@
                 <td class="label" width="100">样品评审信息</td>
 
                 <td>
-                  <textarea v-model="orderData.yangPinPingShenXinXi" class="cell-input"></textarea>
+                  <textarea
+                    v-model.trim="orderData.yangPinPingShenXinXi"
+                    class="cell-input"
+                  ></textarea>
                 </td>
               </tr>
 
@@ -672,7 +719,10 @@
                 <td class="label" width="100">订单评审信息</td>
 
                 <td>
-                  <textarea v-model="orderData.dingDanPingShenXinXi" class="cell-input"></textarea>
+                  <textarea
+                    v-model.trim="orderData.dingDanPingShenXinXi"
+                    class="cell-input"
+                  ></textarea>
                 </td>
               </tr>
             </tbody>
@@ -683,22 +733,22 @@
           <fieldset :disabled="props.mode !== PageMode.EDIT" class="mini-form-group">
             <div class="form-row">
               <div>业务代表:</div>
-              <div><input v-model="orderData.sales" class="cell-input" /></div>
+              <div><input v-model.trim="orderData.sales" class="cell-input" /></div>
             </div>
             <div class="form-row">
               <div>日期:</div>
-              <div><input type="date" class="cell-input" /></div>
+              <div><input type="date" v-model="orderData.yeWuRiqi" class="cell-input" /></div>
             </div>
           </fieldset>
 
           <fieldset :disabled="props.mode !== PageMode.REVIEW" class="mini-form-group">
             <div class="form-row">
               <div>审核人:</div>
-              <div><input v-model="orderData.audit" class="cell-input" /></div>
+              <div><input v-model.trim="orderData.audit" class="cell-input" /></div>
             </div>
             <div class="form-row">
               <div>日期:</div>
-              <div><input type="date" class="cell-input" /></div>
+              <div><input type="date" v-model="orderData.auditDate" class="cell-input" /></div>
             </div>
           </fieldset>
           <table class="mini-form-table">
@@ -709,7 +759,7 @@
               </tr>
               <tr>
                 <td>日期:</td>
-                <td><input type="date" class="cell-input" /></td>
+                <td><input type="date" v-model="orderData.daYinRiqi" class="cell-input" /></td>
               </tr>
             </tbody>
           </table>
@@ -737,7 +787,7 @@
                 <td class="label" width="100">审核意见</td>
                 <td>
                   <textarea
-                    v-model="auditRemark"
+                    v-model.trim="auditRemark"
                     class="cell-input audit-textarea"
                     placeholder="请输入审核处理意见（如拒绝原因等）..."
                   ></textarea>

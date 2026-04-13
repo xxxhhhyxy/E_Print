@@ -245,6 +245,11 @@ const handleOrderUpload = async (wd: IWorkOrder) => {
   wd.work_unique = wd.work_id + '_' + wd.work_ver
   wd.workorderstatus = WorkOrderStatus.PENDING_REVIEW
   wd.clerkDate = formatFullTime(new Date())
+  if (wd.intermedia && wd.intermedia.length > 0) {
+    wd.intermedia.forEach((item, index) => {
+      item.intermediaID = index // 如果你希望从0开始，去掉 +1 即可
+    })
+  }
   addAuditLog(wd)
   const fd = prepareWorkOrderForSubmit(wd)
 

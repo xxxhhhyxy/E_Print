@@ -41,17 +41,30 @@
                 <div class="qty-input-group">
                   <input
                     type="number"
-                    v-model.number="yiGouJianShuMap[`${order.work_unique}_${idx}`]"
+                    v-model.number="item.yiGouJianShu"
                     class="input-mini"
                     placeholder="0"
                   />
+                  <!-- <input
+                    type="number"
+                    v-model.number="item.yiGouJianShu"
+                    class="input-mini"
+                    placeholder="0"
+                  />
+                   -->
                   <span class="divider">/</span>
                   <span class="total-num">{{ item.lingLiaoShu || 0 }}</span>
-                  <button @click="syncPurProgress(order.work_unique, item, idx)">同步</button>
+                  <button
+                    @click="syncPurProgress(order.work_unique, item, idx)"
+                    :class="{ 'btn-active': item.yiGouJianShu !== item.lastSyncedQty }"
+                    :disabled="item.yiGouJianShu === item.lastSyncedQty"
+                  >
+                    同步
+                  </button>
                 </div>
               </td>
 
-              <td class="col-center">
+              <!-- <td class="col-center">
                 <span
                   class="status-badge"
                   :style="{
@@ -60,6 +73,17 @@
                   }"
                 >
                   {{ getPurStatus(order.work_unique, idx, item.lingLiaoShu || 0).text }}
+                </span>
+              </td> -->
+              <td class="col-center">
+                <span
+                  class="status-badge"
+                  :style="{
+                    backgroundColor: getPurStatus(item.yiGouJianShu || 0, item.lingLiaoShu || 0)
+                      .color,
+                  }"
+                >
+                  {{ getPurStatus(item.yiGouJianShu || 0, item.lingLiaoShu || 0).text }}
                 </span>
               </td>
             </tr>
@@ -75,82 +99,118 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router' // 引入路由守卫
 import { FindWorkOrdersWithStatus, UpdateProgress_Pur } from '@/stores/request'
 import { WorkOrderStatus, type IIM, type IWorkOrder } from '@/types/WorkOrder'
 
-const orderList = ref<IWorkOrder[]>([])
+// 1. 扩展 IIM 类型，增加记录原始值的字段
+interface IIMExtended extends IIM {
+  lastSyncedQty?: number // 记录上一次同步后的数量
+}
+
+interface IWorkOrderExtended extends Omit<IWorkOrder, 'intermedia'> {
+  intermedia: IIMExtended[]
+}
+
+const orderList = ref<IWorkOrderExtended[]>([])
+// const orderList = ref<IWorkOrder[]>([])
 const isLoading = ref(false)
 
-const yiGouJianShuMap = reactive<Record<string, number>>({})
+// const yiGouJianShuMap = reactive<Record<string, number>>({})
 
 /** * 状态判断逻辑
  * @param orderId 工单ID
  * @param index 物料索引
  * @param total 需领料总数
  */
-const getPurStatus = (orderId: string, index: number, total: number) => {
-  const key = `${orderId}_${index}`
-  const purchased = yiGouJianShuMap[key] || 0
+// const getPurStatus = (orderId: string, index: number, total: number) => {
+//   const key = `${orderId}_${index}`
+//   const purchased = yiGouJianShuMap[key] || 0
 
-  // 判断逻辑：已购 / 总数 >= 1
+//   // 判断逻辑：已购 / 总数 >= 1
+//   if (total > 0 && purchased >= total) {
+//     return { text: '已完成', color: '#008800' } // 绿色
+//   }
+//   return { text: '未完成', color: '#ff0000' } // 红色
+// }
+
+// 2. 计算属性：检查全局是否有任何行未同步 (用于离开页面时的弹窗)
+const hasUnsavedChanges = computed(() => {
+  return orderList.value.some((order) =>
+    order.intermedia.some((item) => item.yiGouJianShu !== item.lastSyncedQty),
+  )
+})
+
+const getPurStatus = (purchased: number, total: number) => {
   if (total > 0 && purchased >= total) {
-    return { text: '已完成', color: '#008800' } // 绿色
+    return { text: '已完成', color: '#008800' }
   }
-  return { text: '未完成', color: '#ff0000' } // 红色
+  return { text: '未完成', color: '#ff0000' }
 }
-
 // 获取数据后可以初始化（如果需要从后端现有的进度加载初值）
 const fetchOrders = async () => {
   isLoading.value = true
   try {
     const data = await FindWorkOrdersWithStatus(WorkOrderStatus.IN_PRODUCTION)
-    orderList.value = data.filter((work) => work.intermedia && work.intermedia.length > 0)
-
-    // 初始化 map (可选：如果想把已有的 dangQianJinDu 作为初始已购数显示)
-    orderList.value.forEach((order) => {
-      order.intermedia.forEach((item, idx) => {
-        const key = `${order.work_unique}_${idx}`
-        yiGouJianShuMap[key] = item.dangQianJinDu || 0
-      })
-    })
+    // 获取数据时，初始化 lastSyncedQty 为当前的 yiGouJianShu
+    orderList.value = data
+      .filter((work) => work.intermedia && work.intermedia.length > 0)
+      .map((order) => ({
+        ...order,
+        intermedia: order.intermedia.map((item) => ({
+          ...item,
+          // 假设后端返回的初始值是 yiGouJianShu 或 dangQianJinDu
+          lastSyncedQty: item.yiGouJianShu || 0,
+        })),
+      }))
   } finally {
     isLoading.value = false
   }
 }
-const syncPurProgress = async (workUnique: string, item: IIM, idx: number) => {
-  // 1. 从 map 中获取当前输入的数值
-  const inputKey = `${workUnique}_${idx}`
-  const newQty = yiGouJianShuMap[inputKey]
-
-  // 2. 基础校验
+const syncPurProgress = async (workUnique: string, item: IIMExtended, idx: number) => {
+  const newQty = item.yiGouJianShu
   if (newQty === undefined || newQty === null) {
     alert('请输入有效的数量')
     return
   }
 
   try {
-    // 3. 调用后端 API (根据你的 request.ts 逻辑自行替换)
-    // 假设 API 名为 UpdateMaterialPurchaseQty
-    // await UpdateMaterialPurchaseQty({
-    //   work_id: workId,
-    //   itemIndex: idx,
-    //   qty: newQty
-    // })
-
-    // 4. API 成功后，更新本地对象的值，确保界面状态（如进度颜色）同步改变
-    item.yiGouJianShu = newQty
     await UpdateProgress_Pur(workUnique, idx, newQty)
-    // 弹出简单提示（可选，或者使用消息组件）
-    //console.log(`工单 ${workId} 第 ${idx + 1} 项物料数量已同步为: ${newQty}`)
+    // 同步成功后，更新该行的 lastSyncedQty，使按钮重新变回失活状态
+    item.lastSyncedQty = newQty
     alert('同步成功')
   } catch (error) {
     console.error('同步失败:', error)
-    alert('同步失败，请检查网络')
+    alert('同步失败')
+  }
+}
+// 3. 路由守卫：拦截 Vue Router 内部的跳转
+onBeforeRouteLeave((to, from, next) => {
+  if (hasUnsavedChanges.value) {
+    const answer = window.confirm('您的修改尚未保存或同步，确定要离开页面吗？')
+    if (answer) {
+      next()
+    } else {
+      next(false) // 取消跳转
+    }
+  } else {
+    next()
+  }
+})
+// 4. 浏览器拦截：处理用户直接关闭标签页或刷新浏览器的情况
+const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  if (hasUnsavedChanges.value) {
+    e.preventDefault()
+    e.returnValue = '' // 现代浏览器标准写法
   }
 }
 onMounted(() => {
+  window.addEventListener('beforeunload', handleBeforeUnload)
   fetchOrders()
+})
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 </script>
 

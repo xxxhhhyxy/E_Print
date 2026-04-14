@@ -126,7 +126,7 @@
                     'is-done': getPreStatus(item) === PreStatus.Done,
                   },
                 ]"
-                @click="takeOutTask(order.work_id, item)"
+                @click="takeOutTask(order.work_unique, item)"
                 :disabled="getPreStatus(item) !== PreStatus.NotAssign"
               >
                 <template v-if="getPreStatus(item) === PreStatus.Assigned">
@@ -146,7 +146,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
-import { FindWorkOrdersWithStatus } from '@/stores/request'
+import { AddHead_Out, FindWorkOrdersWithStatus } from '@/stores/request'
 import { PreStatus, WorkOrderStatus, type IIM, type IWorkOrder } from '@/types/WorkOrder'
 
 const orderList = ref<IWorkOrder[]>([])
@@ -173,12 +173,12 @@ const fetchOrders = async () => {
   }
 }
 const currentUser = ref({ name: 'admin' })
-const takeOutTask = async (workId: string, item: IIM) => {
+const takeOutTask = async (workUnique: string, item: IIM) => {
   // 1. 如果已有负责人，则拦截
   if (item.head_OUT) return
 
   // 2. 交互确认
-  const confirmMsg = `工单:${workId}\n加工部件:${item.buJianMingCheng || '未命名'}\n确认认领该任务吗？`
+  const confirmMsg = `工单:${workUnique}\n加工部件:${item.buJianMingCheng || '未命名'}\n确认认领该任务吗？`
   if (!window.confirm(confirmMsg)) return
 
   try {
@@ -186,9 +186,9 @@ const takeOutTask = async (workId: string, item: IIM) => {
     // await PostTakeOutTask({ work_id: workId, buJian: item.buJianMingCheng, user: currentUser.value.name })
 
     // 4. 前端响应式更新：将当前用户名赋值给 head_OUT
-    item.head_OUT = currentUser.value.name
-
-    console.log('认领成功，负责人已变更为:', item.head_OUT)
+    // item.head_OUT = currentUser.value.name
+    await AddHead_Out(workUnique, item.intermediaID ?? 0, currentUser.value.name)
+    console.log('认领成功，负责人已变更为:', currentUser.value.name)
   } catch (error) {
     console.error('认领失败:', error)
     alert('认领失败，请稍后重试')

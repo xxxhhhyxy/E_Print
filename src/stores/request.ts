@@ -126,7 +126,7 @@ export const AddWorkAuditLog = (workUnique: string, log: worklog) => {
  * @param head 负责人姓名 (head_pur)
  */
 export const AddHead_Pur = (workUnique: string, iimID: number, head: string) => {
-  return service.post('/workOrders/updateHeadPur', {
+  return service.post('/workOrders/addHeadPur', {
     work_unique: workUnique,
     intermediaID: iimID, // 对应你前端传入的 idx,是intermedia的序号
     head_PUR: head,
@@ -147,7 +147,7 @@ export const UpdateProgress_Pur = (workUnique: string, iimID: number, progress: 
  * @param head 负责人姓名 (head_pur)
  */
 export const AddHead_Out = (workUnique: string, iimID: number, head: string) => {
-  return service.post('/workOrders/updateHeadOut', {
+  return service.post('/workOrders/addHeadOut', {
     work_unique: workUnique,
     intermediaID: iimID, // 对应你前端传入的 idx,是intermedia的序号
     head_OUT: head,
@@ -170,7 +170,7 @@ export const UpdateProgress_Out = (
 }
 
 export const AddHead_Mnf = (workUnique: string, head: string) => {
-  return service.post('/workOrders/updateHeadMnf', {
+  return service.post('/workOrders/addHeadMnf', {
     work_unique: workUnique,
     head_MNF: head,
   })

@@ -130,7 +130,7 @@
                 :disabled="getPreStatus(item) !== PreStatus.NotAssign"
               >
                 <template v-if="getPreStatus(item) === PreStatus.Assigned">
-                  {{ item.head_OUT }}
+                  {{ currentUser.name }}
                 </template>
                 <template v-else-if="getPreStatus(item) === PreStatus.NotReady"> 未就绪 </template>
                 <template v-else-if="getPreStatus(item) === PreStatus.Done"> 已完成 </template>

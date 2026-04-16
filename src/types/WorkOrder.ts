@@ -242,9 +242,9 @@ export const WorkStatusColor: Record<WorkOrderStatus, string> = {
 }
 
 export enum TaskStatus {
-  Ahead = '先于进度',
-  Behind = '落后进度',
   Late = '超过工期',
+  Behind = '落后进度',
+  Ahead = '先于进度',
   Done = '已经完成',
 }
 export const TaskStatusColors: Record<TaskStatus, string> = {
@@ -252,6 +252,12 @@ export const TaskStatusColors: Record<TaskStatus, string> = {
   [TaskStatus.Behind]: '#a3a900', // 深黄色/琥珀色
   [TaskStatus.Late]: '#ff0000', // 红色
   [TaskStatus.Done]: '#878787', // 灰色
+}
+const StatusWeight: Record<TaskStatus, number> = {
+  [TaskStatus.Late]: 4,
+  [TaskStatus.Behind]: 3,
+  [TaskStatus.Ahead]: 2,
+  [TaskStatus.Done]: 1,
 }
 //前序任务是否完成，以及当前任务是否分配
 export enum PreStatus {
@@ -261,11 +267,11 @@ export enum PreStatus {
   Done = '已完成',
 }
 /**
- * 根据日期进度和实际进度计算工序状态
+ * 根据日期进度和实际进度计算外发状态
  * @param item 传入的中间物料详单条目
  * @returns TaskStatus 枚举值
  */
-export const getTaskStatus = (item: IIM): TaskStatus => {
+export const getTaskStatus_Out = (item: IIM): TaskStatus => {
   // 1. 首先检查是否完成：只要当前进度达到 100，即为 Done
   if ((item.dangQianJinDu || 0) >= 100) {
     return TaskStatus.Done

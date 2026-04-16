@@ -216,9 +216,9 @@
             <td>预计结束</td>
             <td
               rowspan="2"
-              :style="{ color: TaskStatusColors[getTaskStatus(item)], fontWeight: 'bold' }"
+              :style="{ color: TaskStatusColors[getTaskStatus_Out(item)], fontWeight: 'bold' }"
             >
-              {{ getTaskStatus(item) }}
+              {{ getTaskStatus_Out(item) }}
             </td>
             <!-- <td rowspan="2"></td> -->
           </tr>
@@ -264,7 +264,7 @@ import WorkOrderInfo, { PageMode as WorkPageMode } from './WorkOrderInfo.vue'
 import OrderInfo, { PageMode as OrderPageMode } from './OrderInfo.vue'
 import {
   calculateTimeProgress,
-  getTaskStatus,
+  getTaskStatus_Out,
   TaskStatusColors,
   type IWorkOrder,
 } from '@/types/WorkOrder'

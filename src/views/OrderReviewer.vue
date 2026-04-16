@@ -89,7 +89,7 @@
 
               <td class="customer-name">{{ order.customer }}</td>
 
-              <td>{{ order.chuHuoRiqiRequired }}</td>
+              <td>{{ order.chuHuoRiqiPromise }}</td>
 
               <td class="action-cell">
                 <button class="view-btn" @click="handleView(order)">

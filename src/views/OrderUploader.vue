@@ -54,7 +54,7 @@
               <td class="time-text">{{ order.salesDate }}</td>
               <td class="bold-text">{{ order.order_id || '未分配' }}</td>
               <td class="customer-name">{{ order.customer }}</td>
-              <td>{{ order.chuHuoRiqiRequired }}</td>
+              <td>{{ order.chuHuoRiqiPromise }}</td>
               <td class="action-cell">
                 <button class="text-btn" @click="openForView(order)">查看</button>
               </td>

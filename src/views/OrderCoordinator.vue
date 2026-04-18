@@ -191,8 +191,18 @@
                 </div>
               </div>
             </td>
-            <td>负责人</td>
-            <td>PUR</td>
+            <td>负责人:{{ item.head_PUR }}</td>
+            <td class="align-center">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 8px">
+                <span>PUR</span>
+                <button
+                  class="btn-sync"
+                  @click="syncPurProgress(selectedWork.work_unique, item, item.yiGouJianShu || 0)"
+                >
+                  同步到云端
+                </button>
+              </div>
+            </td>
             <td></td>
           </tr>
 
@@ -248,8 +258,15 @@
                 </div>
               </div>
             </td>
-            <td>负责人</td>
-            <td>OUT</td>
+            <td>负责人:{{ item.head_OUT }}</td>
+            <td class="align-center">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 8px">
+                <span>OUT</span>
+                <button class="btn-sync" @click="syncOutProgress(selectedWork, item)">
+                  同步到云端
+                </button>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -271,9 +288,10 @@ import {
   calculateTimeProgress,
   getTaskStatus_Out,
   TaskStatusColors,
+  type IIM,
   type IWorkOrder,
 } from '@/types/WorkOrder'
-import { FindWorkOrderByID } from '@/stores/request'
+import { FindWorkOrderByID, UpdateProgress_Out, UpdateProgress_Pur } from '@/stores/request'
 const selectedOrder = ref<IOrder | null>(null)
 const selectedWork = ref<IWorkOrder | null>(null)
 const showOrderModal = ref(false)
@@ -332,6 +350,52 @@ const OnUpdateDP = async (ver: number) => {
     selectedWork.value = null // 出错时重置，防止显示旧数据
   }
 }
+
+const syncPurProgress = async (workUnique: string, item: IIM, idx: number) => {
+  const newQty = item.yiGouJianShu
+  // if (newQty === undefined || newQty === null) {
+  //   alert('请输入有效的数量')
+  //   return
+  // }
+  if (newQty === undefined) {
+    alert('未定义')
+    return
+  }
+  if (newQty === null) {
+    alert('空')
+    return
+  }
+
+  try {
+    await UpdateProgress_Pur(workUnique, idx, newQty)
+    alert('同步成功')
+  } catch (error) {
+    console.error('同步失败:', error)
+    alert('同步失败')
+  }
+}
+
+const syncOutProgress = async (input1: IWorkOrder, input2: IIM) => {
+  if (input2 === null) {
+    alert('空')
+    return
+  }
+
+  try {
+    await UpdateProgress_Out(
+      input1.work_unique,
+      input2.intermediaID || 0,
+      input2.kaiShiRiQi || '',
+      input2.yuQiJieShu || '',
+      input2.dangQianJinDu || 0,
+    )
+    alert('同步成功')
+  } catch (error) {
+    console.error('同步失败:', error)
+    alert('同步失败')
+  }
+}
+
 // 2. 合并并精简监听逻辑
 watch(
   () => props.inputGroup,

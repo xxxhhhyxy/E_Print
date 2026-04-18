@@ -201,17 +201,13 @@
             <thead>
               <tr>
                 <th rowspan="2" colspan="4" class="header-section">产品基本信息,分类及安全要求</th>
-
                 <th rowspan="2" colspan="4" class="header-section">订单数量及产品规格</th>
-
                 <th colspan="4" class="header-section">排期信息及其他</th>
               </tr>
 
               <tr>
                 <th colspan="2" class="sub-header"></th>
-
                 <th class="sub-header">要求日期</th>
-
                 <th class="sub-header">CPC承诺日期</th>
               </tr>
             </thead>

@@ -204,10 +204,15 @@
               <div class="progress-track">
                 <div
                   class="bar-fill time-flow"
-                  :style="{ width: `${calculateTimeProgress(item)}%` }"
+                  :style="{
+                    width: `${calculateTimeProgress(item.kaiShiRiQi || '', item.yuQiJieShu || '')}%`,
+                  }"
                 >
-                  <span v-if="calculateTimeProgress(item) > 5" class="bar-label">
-                    {{ calculateTimeProgress(item) }}%
+                  <span
+                    v-if="calculateTimeProgress(item.kaiShiRiQi || '', item.yuQiJieShu || '') > 5"
+                    class="bar-label"
+                  >
+                    {{ calculateTimeProgress(item.kaiShiRiQi || '', item.yuQiJieShu || '') }}%
                   </span>
                 </div>
               </div>

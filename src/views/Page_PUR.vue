@@ -170,8 +170,16 @@ const fetchOrders = async () => {
 }
 const syncPurProgress = async (workUnique: string, item: IIMExtended, idx: number) => {
   const newQty = item.yiGouJianShu
-  if (newQty === undefined || newQty === null) {
-    alert('请输入有效的数量')
+  // if (newQty === undefined || newQty === null) {
+  //   alert('请输入有效的数量')
+  //   return
+  // }
+  if (newQty === undefined) {
+    alert('未定义')
+    return
+  }
+  if (newQty === null) {
+    alert('空')
     return
   }
 

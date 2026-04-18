@@ -80,12 +80,12 @@ export interface IIM {
   head_OUT?: string //工序负责人
 }
 
-export const calculateTimeProgress = (item: IIM): number => {
+export const calculateTimeProgress = (startDate: string, endDate: string): number => {
   // 增加健壮性检查：确保日期字符串存在
-  if (!item.kaiShiRiQi || !item.yuQiJieShu) return 0
+  if (!startDate || !endDate) return 0
 
-  const start: number = new Date(item.kaiShiRiQi).getTime()
-  const end: number = new Date(item.yuQiJieShu).getTime()
+  const start: number = new Date(startDate).getTime()
+  const end: number = new Date(endDate).getTime()
 
   // 2026年当前的实时时间
   const now: number = Date.now()
@@ -278,7 +278,7 @@ export const getTaskStatus_Out = (item: IIM): TaskStatus => {
   }
 
   // 获取当前的日期进度 (0-100)
-  const timeProgress = calculateTimeProgress(item)
+  const timeProgress = calculateTimeProgress(item.kaiShiRiQi || '', item.yuQiJieShu || '')
 
   // 获取当前时间戳和预期结束时间戳
   const now = Date.now()
@@ -291,6 +291,39 @@ export const getTaskStatus_Out = (item: IIM): TaskStatus => {
 
   // 实际填写的进度
   const actualProgress = item.dangQianJinDu || 0
+
+  // 3. 先于进度：实际进度 > 日期进度
+  if (actualProgress > timeProgress) {
+    return TaskStatus.Ahead
+  }
+
+  // 4. 落后进度：实际进度 < 日期进度，且当前时间还未超过预期结束日期
+  // (由于上面已经拦截了 now > deadline，此处只需判断进度大小)
+  if (actualProgress < timeProgress) {
+    return TaskStatus.Behind
+  }
+
+  // 默认返回（例如两者相等时），可归类为正常或 Behind
+  return TaskStatus.Behind
+}
+
+export const getTaskStatus_Mnf = (item: IWorkOrder): TaskStatus => {
+  // 1. 首先检查是否完成：只要当前进度达到 100，即为 Done
+  if ((item.zhuangDingJianShu || 0) >= (item.dingDanShuLiang || 0)) {
+    return TaskStatus.Done
+  }
+
+  const timeProgress = calculateTimeProgress(item.zhuangDingStart || '', item.zhuangDingEnd || '')
+  // 获取当前时间戳和预期结束时间戳
+  const now = Date.now()
+  const deadline = item.zhuangDingEnd ? new Date(item.zhuangDingEnd).getTime() : 0
+
+  // 2. 检查是否超过工期：当前时间已超过预期结束日期（且未完成）
+  if (deadline > 0 && now > deadline) {
+    return TaskStatus.Late
+  }
+
+  const actualProgress = (item.zhuangDingJianShu || 0) / (item.dingDanShuLiang || 0)
 
   // 3. 先于进度：实际进度 > 日期进度
   if (actualProgress > timeProgress) {

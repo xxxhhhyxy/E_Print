@@ -71,6 +71,7 @@ const handleLogout = () => {
             <RouterLink to="/work-reviewer">工程单审核</RouterLink>
             <RouterLink to="/page-PUR">采购部</RouterLink>
             <RouterLink to="/page-OUT">外发部</RouterLink>
+            <RouterLink to="/page-MNF">生产部</RouterLink>
             <RouterLink to="/page-ADM">跟单员</RouterLink>
             <!-- <RouterLink to="/dispatch-center">派单中心</RouterLink> -->
           </div>

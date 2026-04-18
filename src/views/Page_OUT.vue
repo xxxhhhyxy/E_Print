@@ -81,39 +81,21 @@
 
           <tr class="main-params-row">
             <td class="align-center bg-index"></td>
-            <td>
-              {{ item.buJianMingCheng }}
-            </td>
+            <td>{{ item.buJianMingCheng }}</td>
             <td>{{ item.yinShuaYanSe }}</td>
-            <td>
-              {{ item.wuLiaoMingCheng }}
-            </td>
+            <td>{{ item.wuLiaoMingCheng }}</td>
             <td>{{ item.pinPai }}</td>
             <td>{{ item.caiLiaoGuiGe }}</td>
             <td>{{ item.FSC }}</td>
-            <td>
-              {{ item.kaiShu }}
-            </td>
+            <td>{{ item.kaiShu }}</td>
             <td>{{ item.shangJiChiCun }}</td>
-            <td>
-              {{ item.paiBanMuShu }}
-            </td>
-            <td>
-              {{ item.yinChuShu }}
-            </td>
-            <td>
-              {{ item.yinSun }}
-            </td>
-            <td>
-              {{ item.lingLiaoShu }}
-            </td>
+            <td>{{ item.paiBanMuShu }}</td>
+            <td>{{ item.yinChuShu }}</td>
+            <td>{{ item.yinSun }}</td>
+            <td>{{ item.lingLiaoShu }}</td>
             <td>{{ item.biaoMianChuLi }}</td>
-            <td>
-              {{ item.yinShuaBanShu }}
-            </td>
-            <td>
-              {{ item.shengChanLuJing }}
-            </td>
+            <td>{{ item.yinShuaBanShu }}</td>
+            <td>{{ item.shengChanLuJing }}</td>
             <td>{{ item.paiBanFangShi }}</td>
             <td>
               <button

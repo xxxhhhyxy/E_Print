@@ -426,6 +426,7 @@ const props = defineProps<{
 }>()
 
 const createEmptyProcess = (): Partial<IIM> => ({
+  intermediaID: 0, // 初始序号
   buJianMingCheng: '',
   yinShuaYanSe: '',
   wuLiaoMingCheng: '',
@@ -442,9 +443,14 @@ const createEmptyProcess = (): Partial<IIM> => ({
   yinShuaBanShu: 0,
   shengChanLuJing: '',
   paiBanFangShi: '',
+
+  // IIM 生产/采购追踪字段
+  yiGouJianShu: 0,
+  head_PUR: '',
   kaiShiRiQi: '',
   yuQiJieShu: '',
   dangQianJinDu: 0,
+  head_OUT: '',
 })
 
 const createEmptyWorkOrder = (): Partial<IWorkOrder> => ({
@@ -474,6 +480,10 @@ const createEmptyWorkOrder = (): Partial<IWorkOrder> => ({
 
   intermedia: [createEmptyProcess()],
   workorderstatus: WorkOrderStatus.DRAFT,
+  zhuangDingJianShu: 0,
+  zhuangDingStart: '',
+  zhuangDingEnd: '',
+  head_MNF: '', // 生产部负责人
   attachments: [],
   auditLogs: [], // 审批日志：记录“单子是怎么过的” (用于查看审核记录), OrderState不是Audit的时候不再更新
 })

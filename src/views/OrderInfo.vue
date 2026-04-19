@@ -825,6 +825,7 @@ export enum PageMode {
 import { ref, reactive, watch } from 'vue'
 
 import { OrderStatus, type IOrder, type IAttachment } from '@/types/Order'
+import { parsePdfService } from '@/stores/ParsePDF'
 
 // --- 审核意见---
 const auditRemark = ref('')
@@ -1080,7 +1081,37 @@ const handleCommitMainFile = () => {
 
 // 核心解析函数
 async function ParseOrderFile() {
-  if (!mainFile.file) return
+  if (!mainFile.file) {
+    alert('请先选择 PDF 订单文件')
+    return
+  }
+
+  try {
+    // 开启加载动画
+    isParsing.value = true
+
+    // 调用解析服务
+    console.log('--- 🤖 AI 开始解析 PDF ---')
+    const parsedData = await parsePdfService(mainFile.file)
+
+    // 3. 将解析结果合并到响应式对象 orderData 中
+    // 使用 Object.assign 能够保留 orderData 的响应式连接，同时覆盖已识别的字段
+    Object.assign(orderData, parsedData)
+
+    // 特殊处理：如果解析出了明细行，确保引用更新
+    // if (parsedData.chanPinMingXi && parsedData.chanPinMingXi.length > 0) {
+    //   orderData.chanPinMingXi = [...parsedData.chanPinMingXi]
+    // }
+
+    console.log('--- ✅ 解析完成并填充 ---', orderData)
+    alert('AI 解析成功，表单已自动填充')
+  } catch (err) {
+    console.error('解析流程中断:', err)
+    alert('解析失败，请检查本地服务是否启动或 PDF 格式是否正确')
+  } finally {
+    // 关闭加载动画
+    isParsing.value = false
+  }
 }
 
 // 3. 彻底重写的重置函数

@@ -55,7 +55,7 @@
                   <span class="divider">/</span>
                   <span class="total-num">{{ item.lingLiaoShu || 0 }}</span>
                   <button
-                    @click="syncPurProgress(order.work_unique, item, idx)"
+                    @click="syncPurProgress(order, item, idx)"
                     :class="{ 'btn-active': item.yiGouJianShu !== item.lastSyncedQty }"
                     :disabled="item.yiGouJianShu === item.lastSyncedQty"
                   >
@@ -101,8 +101,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router' // 引入路由守卫
-import { FindWorkOrdersWithStatus, UpdateProgress_Pur } from '@/stores/request'
-import { WorkOrderStatus, type IIM, type IWorkOrder } from '@/types/WorkOrder'
+import { FindWorkOrdersWithStatus, UpdateProgress_Out, UpdateProgress_Pur } from '@/stores/request'
+import { formatYMD, WorkOrderStatus, type IIM, type IWorkOrder } from '@/types/WorkOrder'
 
 // 1. 扩展 IIM 类型，增加记录原始值的字段
 interface IIMExtended extends IIM {
@@ -168,7 +168,7 @@ const fetchOrders = async () => {
     isLoading.value = false
   }
 }
-const syncPurProgress = async (workUnique: string, item: IIMExtended, idx: number) => {
+const syncPurProgress = async (work: IWorkOrder, item: IIMExtended, idx: number) => {
   const newQty = item.yiGouJianShu
   // if (newQty === undefined || newQty === null) {
   //   alert('请输入有效的数量')
@@ -182,11 +182,20 @@ const syncPurProgress = async (workUnique: string, item: IIMExtended, idx: numbe
     alert('空')
     return
   }
-
   try {
-    await UpdateProgress_Pur(workUnique, idx, newQty)
+    await UpdateProgress_Pur(work.work_unique, idx, newQty)
     // 同步成功后，更新该行的 lastSyncedQty，使按钮重新变回失活状态
     item.lastSyncedQty = newQty
+
+    if ((item.yiGouJianShu || 0) >= (item.lingLiaoShu || 0)) {
+      await UpdateProgress_Out(
+        work.work_unique,
+        idx,
+        formatYMD(new Date()),
+        formatYMD(work.chuHuoRiqiRequired),
+        0,
+      )
+    }
     alert('同步成功')
   } catch (error) {
     console.error('同步失败:', error)

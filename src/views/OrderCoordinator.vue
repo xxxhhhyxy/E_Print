@@ -166,7 +166,7 @@
             <td></td>
             <td>
               <input
-                v-model.number="tempInputMap[index]"
+                v-model.number="item.yiGouJianShu"
                 style="width: 50px; text-align: right; padding-right: 4px"
               />/{{ item.lingLiaoShu }}
             </td>
@@ -178,15 +178,15 @@
                     width:
                       Math.min(
                         100,
-                        Math.max(0, ((tempInputMap[index] || 0) / (item.lingLiaoShu || 1)) * 100),
+                        Math.max(0, ((item.yiGouJianShu || 0) / (item.lingLiaoShu || 1)) * 100),
                       ) + '%',
                   }"
                 >
                   <span
-                    v-if="(tempInputMap[index] || 0) / (item.lingLiaoShu || 1) > 5"
+                    v-if="(item.yiGouJianShu || 0) / (item.lingLiaoShu || 1) > 5"
                     class="bar-label"
                   >
-                    (tempInputMap[index] || 0) / (item.lingLiaoShu || 1)
+                    (item.yiGouJianShu || 0) / (item.lingLiaoShu || 1)
                   </span>
                 </div>
               </div>
@@ -298,7 +298,7 @@ const showOrderModal = ref(false)
 const showWorkModal = ref(false)
 
 // 1. 创建一个临时的物料采购数目存储容器
-const tempInputMap = ref<Record<number, number>>({})
+// const tempInputMap = ref<Record<number, number>>({})
 // 2. 状态管理
 const selectedVer = ref<number>(0) //选中的版本
 // 1. 接收来自 Page_ADM 的参数

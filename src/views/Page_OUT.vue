@@ -315,6 +315,7 @@ const syncOutProgress = async (input: IOutTask) => {
       input.item.yuQiJieShu || '',
       input.item.dangQianJinDu || 0,
     )
+
     alert('同步成功')
   } catch (error) {
     console.error('同步失败:', error)

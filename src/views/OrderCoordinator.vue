@@ -173,7 +173,7 @@
             <td colspan="11" class="progress-td">
               <div class="progress-track">
                 <div
-                  class="bar-fill production-flow"
+                  class="bar-fill purchase-flow"
                   :style="{
                     width:
                       Math.min(
@@ -183,10 +183,10 @@
                   }"
                 >
                   <span
-                    v-if="(item.yiGouJianShu || 0) / (item.lingLiaoShu || 1) > 5"
+                    v-if="(item.yiGouJianShu || 0) / (item.lingLiaoShu || 1) > 0.05"
                     class="bar-label"
                   >
-                    (item.yiGouJianShu || 0) / (item.lingLiaoShu || 1)
+                    {{ ((item.yiGouJianShu || 0) / (item.lingLiaoShu || 1)) * 100 }}%
                   </span>
                 </div>
               </div>
@@ -269,13 +269,110 @@
             </td>
           </tr>
         </tbody>
+
+        <tr>
+          <td rowspan="2">生产部</td>
+          <td>装订开始</td>
+          <td><input type="date" v-model="selectedWork.zhuangDingStart" /></td>
+          <td colspan="11" class="progress-td">
+            <div class="progress-track">
+              <div
+                class="bar-fill time-flow"
+                :style="{
+                  width: `${calculateTimeProgress(selectedWork.zhuangDingStart || '', selectedWork.zhuangDingEnd || '')}%`,
+                }"
+              >
+                <span
+                  v-if="
+                    calculateTimeProgress(
+                      selectedWork.zhuangDingStart || '',
+                      selectedWork.zhuangDingEnd || '',
+                    ) > 5
+                  "
+                  class="bar-label"
+                >
+                  {{
+                    calculateTimeProgress(
+                      selectedWork.zhuangDingStart || '',
+                      selectedWork.zhuangDingEnd || '',
+                    )
+                  }}%
+                </span>
+              </div>
+            </div>
+          </td>
+          <td><input type="date" v-model="selectedWork.zhuangDingEnd" /></td>
+          <td>装订结束</td>
+          <td
+            rowspan="2"
+            :style="{
+              color: TaskStatusColors[getTaskStatus_Mnf(selectedWork)],
+              fontWeight: 'bold',
+            }"
+          >
+            {{ getTaskStatus_Mnf(selectedWork) }}
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>
+            <input
+              v-model.number="selectedWork.zhuangDingJianShu"
+              style="width: 50px; text-align: right; padding-right: 4px"
+            />/{{ selectedWork.dingDanShuLiang }}
+          </td>
+
+          <td colspan="11" class="progress-td">
+            <div class="progress-track">
+              <div
+                class="bar-fill zhuangDing-flow"
+                :style="{
+                  width:
+                    Math.min(
+                      100,
+                      Math.max(
+                        0,
+                        ((selectedWork.zhuangDingJianShu || 0) /
+                          (selectedWork.dingDanShuLiang || 1)) *
+                          100,
+                      ),
+                    ) + '%',
+                }"
+              >
+                <span
+                  v-if="
+                    (selectedWork.zhuangDingJianShu || 0) / (selectedWork.dingDanShuLiang || 1) >
+                    0.05
+                  "
+                  class="bar-label"
+                >
+                  {{
+                    ((selectedWork.zhuangDingJianShu || 0) / (selectedWork.dingDanShuLiang || 1)) *
+                    100
+                  }}%
+                </span>
+              </div>
+            </div>
+          </td>
+          <td>负责人:{{ selectedWork.head_MNF }}</td>
+          <td class="align-center">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px">
+              <span>MNF</span>
+              <button
+                class="btn-sync"
+                @click="syncMnfProgress(selectedWork, selectedWork.zhuangDingJianShu || 0)"
+              >
+                同步到云端
+              </button>
+            </div>
+          </td>
+        </tr>
       </table>
     </div>
     <!-- <div v-else>
       <p>正在努力加载工单详情，如果长时间不显示，请检查后台是否存在该版本的工单记录...</p>
     </div> -->
     <hr />
-    生产部
   </div>
 </template>
 
@@ -287,11 +384,17 @@ import OrderInfo, { PageMode as OrderPageMode } from './OrderInfo.vue'
 import {
   calculateTimeProgress,
   getTaskStatus_Out,
+  getTaskStatus_Mnf,
   TaskStatusColors,
   type IIM,
   type IWorkOrder,
 } from '@/types/WorkOrder'
-import { FindWorkOrderByID, UpdateProgress_Out, UpdateProgress_Pur } from '@/stores/request'
+import {
+  FindWorkOrderByID,
+  UpdateProgress_Mnf,
+  UpdateProgress_Out,
+  UpdateProgress_Pur,
+} from '@/stores/request'
 const selectedOrder = ref<IOrder | null>(null)
 const selectedWork = ref<IWorkOrder | null>(null)
 const showOrderModal = ref(false)
@@ -353,10 +456,7 @@ const OnUpdateDP = async (ver: number) => {
 
 const syncPurProgress = async (workUnique: string, item: IIM, idx: number) => {
   const newQty = item.yiGouJianShu
-  // if (newQty === undefined || newQty === null) {
-  //   alert('请输入有效的数量')
-  //   return
-  // }
+
   if (newQty === undefined) {
     alert('未定义')
     return
@@ -389,6 +489,21 @@ const syncOutProgress = async (input1: IWorkOrder, input2: IIM) => {
       input2.yuQiJieShu || '',
       input2.dangQianJinDu || 0,
     )
+    alert('同步成功')
+  } catch (error) {
+    console.error('同步失败:', error)
+    alert('同步失败')
+  }
+}
+
+const syncMnfProgress = async (input: IWorkOrder, jianShu: number) => {
+  if (input === null) {
+    alert('空')
+    return
+  }
+
+  try {
+    await UpdateProgress_Mnf(input.work_unique, jianShu)
     alert('同步成功')
   } catch (error) {
     console.error('同步失败:', error)
@@ -610,6 +725,10 @@ hr {
   align-items: center;
   justify-content: flex-end;
 }
+
+.purchase-flow {
+  background: linear-gradient(to right, #ffffff, #ff9100);
+}
 /* 生产进度感：绿色调 */
 .production-flow {
   background: linear-gradient(to right, #ffffff, #00eaff);
@@ -617,5 +736,8 @@ hr {
 /* 时间流逝感：深色调 */
 .time-flow {
   background: linear-gradient(to right, #ffffff, #8cff00);
+}
+.zhuangDing-flow {
+  background: linear-gradient(to right, #ffffff, #ff00ea);
 }
 </style>

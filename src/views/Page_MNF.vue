@@ -123,7 +123,7 @@
               <td class="progress-td">
                 <div class="progress-track">
                   <div
-                    class="bar-fill production-flow"
+                    class="bar-fill zhuangDing-flow"
                     :style="{
                       width:
                         Math.min(
@@ -420,5 +420,9 @@ onUnmounted(() => {
   text-align: center;
   background: transparent;
   cursor: pointer;
+}
+
+.zhuangDing-flow {
+  background: linear-gradient(to right, #ffffff, #ff00ea);
 }
 </style>

@@ -174,7 +174,7 @@
                 </tr>
                 <tr>
                   <td>当前进度</td>
-                  <td><input v-model.number="task.item.dangQianJinDu" /></td>
+                  <td><input v-model.number="task.item.dangQianJinDu" /> %</td>
                   <td colspan="14" class="progress-td">
                     <div class="progress-track">
                       <div
@@ -211,7 +211,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { AddHead_Out, FindWorkOrdersWithStatus, UpdateProgress_Out } from '@/stores/request'
+import {
+  AddHead_Out,
+  FindWorkOrdersWithStatus,
+  UpdateProgress_Mnf,
+  UpdateProgress_Out,
+} from '@/stores/request'
 import {
   calculateTimeProgress,
   formatYMD,
@@ -253,7 +258,8 @@ const fetchOrders = async () => {
         work.intermedia.forEach((im) => {
           // 筛选条件：进度 < 100 (因为 >=100 通常代表已完成，外发部不再处理)
           // 注意：根据你的描述“dangQianJinDu < 100”才需要被处理
-          if ((im.dangQianJinDu || 0) < 100) {
+          // if ((im.dangQianJinDu || 0) < 100)
+          if ((im.yiGouJianShu || 0) >= (im.lingLiaoShu || 0)) {
             const taskPayload: IOutTask = {
               workOrder: work,
               item: im,
@@ -290,6 +296,7 @@ const takeTask_Out = async (workUnique: string, item: IIM) => {
     await AddHead_Out(workUnique, item.intermediaID ?? 0, currentUser.value.name)
     // 前端即时更新状态显示
     item.head_OUT = currentUser.value.name
+    fetchOrders()
     console.log('认领成功')
   } catch (error) {
     console.error('认领失败:', error)
@@ -315,6 +322,15 @@ const syncOutProgress = async (input: IOutTask) => {
       input.item.yuQiJieShu || '',
       input.item.dangQianJinDu || 0,
     )
+
+    const isAllCompleted = input.workOrder.intermedia.every((im) => (im.dangQianJinDu || 0) >= 100)
+
+    if (isAllCompleted) {
+      await UpdateProgress_Mnf(input.workOrder.work_unique, 0)
+      // 在这里执行你需要的操作，例如提示用户或调用更新工单状态的接口
+      console.log('该工单的所有工序已全部完成！')
+      // alert('该订单所有部件已外发加工完毕')
+    }
 
     alert('同步成功')
   } catch (error) {

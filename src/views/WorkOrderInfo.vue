@@ -390,7 +390,12 @@
             </div>
             <div>时间：</div>
             <div>
-              <input :disabled="props.mode !== PageMode.REVIEW" type="date" class="cell-input" />
+              <input
+                :disabled="props.mode !== PageMode.REVIEW"
+                type="date"
+                class="cell-input"
+                v-model="WorkOrderData.auditDate"
+              />
             </div>
           </div>
         </div>

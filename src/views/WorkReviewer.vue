@@ -138,6 +138,9 @@ import {
   AddWorkAuditInfo,
   AddWorkAuditLog,
 } from '@/stores/request'
+import { useUserStore } from '@/stores/userStore'
+
+const userStore = useUserStore()
 
 // --- 状态定义 ---
 const currentTab = ref<'PENDING' | 'REVIEWED'>('PENDING')
@@ -180,14 +183,14 @@ const fetchWorksData = async () => {
     // 这样你的 pendingWorkSource 就会包含这两种状态的所有工单
     pendingWorkSource.value = [...pendingData, ...approveData, ...productionData]
 
-    // 2. 获取已经结束
-    const [completeData, cancelData] = await Promise.all([
+    // 2. 获取已经结束（含驳回：驳回单需要在这里可追溯，否则会从所有列表消失）
+    const [completeData, cancelData, rejectedData] = await Promise.all([
       FindWorkOrdersWithStatus(WorkOrderStatus.COMPLETED),
       FindWorkOrdersWithStatus(WorkOrderStatus.CANCELLED),
+      FindWorkOrdersWithStatus(WorkOrderStatus.REJECTED),
     ])
 
-    //const reviewedData = await FindWorkOrdersByAudit('admin')
-    reviewedWorkSource.value = [...completeData, ...cancelData]
+    reviewedWorkSource.value = [...completeData, ...cancelData, ...rejectedData]
   } catch (err) {
     console.error('工单数据获取失败:', err)
   }
@@ -291,10 +294,10 @@ const handleApprove = async (wd: IWorkOrder, curComment: string) => {
   try {
     await ChangeWorkOrderStatusTo(wd.work_unique, WorkOrderStatus.IN_PRODUCTION)
 
-    await AddWorkAuditInfo(wd.work_unique, 'admin', formatYMD(new Date()))
+    await AddWorkAuditInfo(wd.work_unique, userStore.userName, formatYMD(new Date()))
     const tempLog = (): IAuditLog => ({
       time: formatFullTime(new Date()),
-      operator: 'admin',
+      operator: userStore.userName,
       action: 'approve',
       comment: curComment,
     })
@@ -314,10 +317,10 @@ const handleReject = async (wd: IWorkOrder, curComment: string) => {
   isUploading.value = true
   try {
     await ChangeWorkOrderStatusTo(wd.work_unique, WorkOrderStatus.REJECTED)
-    await AddWorkAuditInfo(wd.work_unique, 'admin', formatYMD(new Date()))
+    await AddWorkAuditInfo(wd.work_unique, userStore.userName, formatYMD(new Date()))
     const tempLog = (): IAuditLog => ({
       time: formatFullTime(new Date()),
-      operator: 'admin',
+      operator: userStore.userName,
       action: 'reject',
       comment: curComment,
     })

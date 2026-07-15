@@ -37,8 +37,8 @@
               <th @click="handleSort('customer')" class="sortable">
                 客户 {{ getSortIcon('customer') }}
               </th>
-              <th width="150" @click="handleSort('chuHuoRiqiRequired')" class="sortable">
-                截止日期 {{ getSortIcon('chuHuoRiqiRequired') }}
+              <th width="150" @click="handleSort('chuHuoRiqiPromise')" class="sortable">
+                截止日期 {{ getSortIcon('chuHuoRiqiPromise') }}
               </th>
               <th width="100" style="text-align: center">操作</th>
             </tr>
@@ -56,7 +56,14 @@
               <td class="customer-name">{{ order.customer }}</td>
               <td>{{ order.chuHuoRiqiPromise }}</td>
               <td class="action-cell">
-                <button class="text-btn" @click="openForView(order)">查看</button>
+                <button
+                  v-if="order.orderstatus === OrderStatus.DRAFT || order.orderstatus === OrderStatus.REJECTED"
+                  class="text-btn"
+                  @click="openForEdit(order)"
+                >
+                  编辑
+                </button>
+                <button v-else class="text-btn" @click="openForView(order)">查看</button>
               </td>
             </tr>
 
@@ -74,6 +81,7 @@
       :initialData="selectedOrder"
       @close="showCreator = false"
       @submit="handleOrderUpload"
+      @save-draft="handleSaveDraft"
     />
   </div>
 </template>
@@ -88,8 +96,11 @@ import {
   prepareOrderFormData,
   type IOrder,
 } from '@/types/Order'
-import request, { FindOrdersBySales } from '@/stores/request'
+import request, { FindOrdersBySales, FindOrderByID } from '@/stores/request'
 import OrderInfo, { PageMode } from './OrderInfo.vue'
+import { useUserStore } from '@/stores/userStore'
+
+const userStore = useUserStore()
 
 // --- 状态控制 ---
 const showCreator = ref(false)
@@ -108,8 +119,8 @@ onMounted(async () => {
  */
 const fetchOrdersData = async () => {
   try {
-    // 调用你在 request.ts 里写的函数，扒拉 admin 的数据
-    const data = await FindOrdersBySales('admin')
+    // 查询当前登录业务员的订单
+    const data = await FindOrdersBySales(userStore.userName)
 
     // 将拿到的数组赋值给响应式变量 orders
     // processedOrders 会根据这个数据的变化自动重新计算过滤和排序
@@ -134,6 +145,15 @@ const openForCreate = () => {
 }
 
 /**
+ * 以编辑模式打开已有订单（草稿/驳回后修改重提）
+ */
+const openForEdit = (order: IOrder) => {
+  activeMode.value = PageMode.EDIT
+  selectedOrder.value = order
+  showCreator.value = true
+}
+
+/**
  * 以查看模式打开
  * @param order 选中的订单数据
  */
@@ -152,23 +172,76 @@ const handleOrderUpload = async (curOrder: IOrder) => {
   if (isUploading.value) return
   isUploading.value = true
 
+  const operator = userStore.userName
   //定义唯一索引
   curOrder.order_unique = curOrder.order_id + '_' + curOrder.order_ver
-  curOrder.orderstatus = OrderStatus.PENDING_REVIEW
-  // 依然在子组件完成日志初始化和数据封装，因为子组件最清楚表单结构
-  addAuditLog(curOrder, 'admin')
-  curOrder.sales = 'admin'
-  curOrder.salesDate = formatFullTime(new Date())
-  const fd = prepareOrderFormData(curOrder, 'admin')
 
   try {
+    // 重新提交同号订单前需要用户明确确认（重审通过前不影响既有工程单）
+    const existing = await FindOrderByID(curOrder.order_unique).catch(() => null)
+    if (existing && existing.order_unique) {
+      if (
+        existing.orderstatus === OrderStatus.APPROVED ||
+        existing.orderstatus === OrderStatus.IN_PRODUCTION
+      ) {
+        const ok = window.confirm(
+          `订单 ${curOrder.order_id} 已通过审核（当前状态：${existing.orderstatus}）。\n重新提交将退回"待审核"，重审通过后才会更新工程单。\n确认继续？`,
+        )
+        if (!ok) return
+      } else if (existing.orderstatus === OrderStatus.PENDING_REVIEW) {
+        const ok = window.confirm(`订单 ${curOrder.order_id} 正在审核中，重新提交将覆盖为最新内容。确认继续？`)
+        if (!ok) return
+      }
+    }
+
+    curOrder.orderstatus = OrderStatus.PENDING_REVIEW
+    // 依然在子组件完成日志初始化和数据封装，因为子组件最清楚表单结构
+    addAuditLog(curOrder, operator)
+    curOrder.sales = operator
+    curOrder.salesDate = formatFullTime(new Date())
+    const fd = prepareOrderFormData(curOrder, operator)
+
     await request.post('/orders/create', fd)
     alert('订单已成功提交审核！')
     showCreator.value = false
     fetchOrdersData() // 这里可以刷新列表
   } catch (err) {
     console.error('后端响应错误:', err)
-    alert('发送失败，请检查网络或后端服务')
+    const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+    alert(msg ? `提交失败：${msg}` : '发送失败，请检查网络或后端服务')
+  } finally {
+    isUploading.value = false
+  }
+}
+
+/**
+ * 保存草稿：与提交走同一 create 接口，但状态为草稿、不触发审核流程
+ */
+const handleSaveDraft = async (curOrder: IOrder) => {
+  if (isUploading.value) return
+  isUploading.value = true
+
+  const operator = userStore.userName
+  try {
+    if (!curOrder.order_id) {
+      // 没有订单号时先给一个草稿号，保证 order_unique 可检索
+      curOrder.order_id = `DRAFT-${Date.now()}`
+    }
+    if (!curOrder.order_ver) curOrder.order_ver = 1
+    curOrder.order_unique = curOrder.order_id + '_' + curOrder.order_ver
+    curOrder.orderstatus = OrderStatus.DRAFT
+    curOrder.sales = operator
+    curOrder.salesDate = formatFullTime(new Date())
+    const fd = prepareOrderFormData(curOrder, operator)
+
+    await request.post('/orders/create', fd)
+    alert('草稿已保存')
+    showCreator.value = false
+    fetchOrdersData()
+  } catch (err) {
+    console.error('后端响应错误:', err)
+    const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+    alert(msg ? `保存失败：${msg}` : '保存失败，请检查网络或后端服务')
   } finally {
     isUploading.value = false
   }
@@ -176,7 +249,7 @@ const handleOrderUpload = async (curOrder: IOrder) => {
 
 // --- 列表排序与过滤逻辑 ---
 
-type SortKey = 'orderstatus' | 'salesDate' | 'order_id' | 'customer' | 'chuHuoRiqiRequired'
+type SortKey = 'orderstatus' | 'salesDate' | 'order_id' | 'customer' | 'chuHuoRiqiPromise'
 interface SortConfig {
   key: SortKey
   order: 'asc' | 'desc'

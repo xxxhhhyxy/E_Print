@@ -123,6 +123,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   addAuditLog,
   formatFullTime,
+  formatYMD,
   prepareWorkOrderForSubmit,
   WorkOrderStatus,
   WorkStatusColor,
@@ -131,6 +132,9 @@ import {
 // 核心：导入你的创建器组件
 import WorkOrderInfo, { PageMode } from './WorkOrderInfo.vue'
 import request, { FindWorkOrdersByClerk, FindWorkOrdersWithStatus } from '@/stores/request'
+import { useUserStore } from '@/stores/userStore'
+
+const userStore = useUserStore()
 
 const activeMode = ref<PageMode>(PageMode.VIEW)
 const isUploading = ref(false)
@@ -149,15 +153,16 @@ onMounted(async () => {
  */
 const fetchOrdersData = async () => {
   try {
-    // 调用你在 request.ts 里写的函数，扒拉 admin 的数据
-    const [draftWorkOrder, myWorkOrder] = await Promise.all([
+    // 草稿 ∪ 驳回 ∪ 当前制单员的工单（驳回单必须可见，否则无法修改重提）
+    const [draftWorkOrder, rejectedWorkOrder, myWorkOrder] = await Promise.all([
       FindWorkOrdersWithStatus(WorkOrderStatus.DRAFT),
-      FindWorkOrdersByClerk('admin'),
+      FindWorkOrdersWithStatus(WorkOrderStatus.REJECTED),
+      FindWorkOrdersByClerk(userStore.userName),
     ])
 
     // 将拿到的数组赋值给响应式变量 orders
     // processedOrders 会根据这个数据的变化自动重新计算过滤和排序
-    const combined = [...draftWorkOrder, ...myWorkOrder]
+    const combined = [...draftWorkOrder, ...rejectedWorkOrder, ...myWorkOrder]
 
     // 2. 利用 Map 进行去重
     // 以 order_id 作为 Key，如果 ID 重复，后面的会覆盖前面的
@@ -242,6 +247,15 @@ const handleOrderUpload = async (wd: IWorkOrder) => {
   if (isUploading.value) return
   isUploading.value = true
 
+  // 手工创建的工单没有 work_id：自动生成，避免产生 "_1" 这类孤儿标识
+  if (!wd.work_id || !wd.work_id.trim()) {
+    const now = new Date()
+    const ymd = formatYMD(now).replace(/-/g, '')
+    const hms = now.toTimeString().slice(0, 8).replace(/:/g, '')
+    wd.work_id = `W${ymd}-${hms}`
+  }
+  if (!wd.work_ver) wd.work_ver = 1
+  wd.work_clerk = userStore.userName // 制单员 = 当前登录用户
   wd.work_unique = wd.work_id + '_' + wd.work_ver
   wd.workorderstatus = WorkOrderStatus.PENDING_REVIEW
   wd.clerkDate = formatFullTime(new Date())
@@ -255,12 +269,13 @@ const handleOrderUpload = async (wd: IWorkOrder) => {
 
   try {
     await request.post('/workOrders/create', fd)
-    alert('订单已成功提交审核！')
+    alert('工程单已成功提交审核！')
     showCreator.value = false
     fetchOrdersData() // 这里可以刷新列表
   } catch (err) {
     console.error('后端响应错误:', err)
-    alert('发送失败，请检查网络或后端服务')
+    const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+    alert(msg ? `提交失败：${msg}` : '发送失败，请检查网络或后端服务')
   } finally {
     isUploading.value = false
   }

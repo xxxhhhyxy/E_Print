@@ -189,7 +189,8 @@ export function prepareOrderFormData(orderData: IOrder, salesmanName: string): F
 
   // 4. 针对特定的日期字段进行“强制类型断言格式化”
   // 如果你确实希望对某些 key 执行 formatYMD，可以用这种方式：
-  const targetDateKeys: (keyof IOrder)[] = ['salesDate', 'yeWuRiqi', 'chuHuoRiqiRequired'] // 按需列举
+  // salesDate 是完整提交时间（含时分秒），不做 YMD 截断，列表"提交时间"才能显示到秒
+  const targetDateKeys: (keyof IOrder)[] = ['yeWuRiqi', 'chuHuoRiqiRequired'] // 按需列举
 
   targetDateKeys.forEach((key) => {
     const value = cleanedPayload[key]

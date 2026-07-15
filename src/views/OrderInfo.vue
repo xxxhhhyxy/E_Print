@@ -58,8 +58,9 @@
           <div class="control-item">
             <label>版本</label>
             <input
-              type="text"
-              v-model.trim="orderData.order_ver"
+              type="number"
+              min="1"
+              v-model.number="orderData.order_ver"
               placeholder="版本号"
               class="inline-input mini"
             />
@@ -751,7 +752,7 @@
             <tbody>
               <tr>
                 <td>打印人:</td>
-                <td><input class="cell-input" /></td>
+                <td><input v-model.trim="orderData.daYinRen" class="cell-input" /></td>
               </tr>
               <tr>
                 <td>日期:</td>
@@ -771,11 +772,8 @@
           </div> -->
         </div>
 
-        <fieldset
-          :disabled="props.mode !== PageMode.REVIEW"
-          v-if="props.mode !== PageMode.EDIT"
-          class="audit-section"
-        >
+        <!-- 审核决策只在审核模式渲染，避免查看/生产模式出现永久禁用的死按钮 -->
+        <fieldset v-if="props.mode === PageMode.REVIEW" class="audit-section">
           <div class="section-label" style="margin-bottom: 10px">审核决策</div>
           <table class="production-table audit-table">
             <tbody>
@@ -1158,6 +1156,7 @@ watch(
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'submit', curOrder: IOrder): void // 提交 FormData 给父组件
+  (e: 'save-draft', curOrder: IOrder): void // 保存草稿
   (e: 'approve', curOrder: IOrder, curComment: string): void
   (e: 'reject', curOrder: IOrder, curComment: string): void
 }>()
@@ -1289,7 +1288,8 @@ const handleCommitUpload = () => {
 
   tempFile.value = { category: '', fileName: '', file: null }
 
-  const input = document.getElementById('file-upload-input') as HTMLInputElement
+  // 清空实际生效的附件文件输入框（此前指向不存在的 file-upload-input，导致添加后不清空）
+  const input = document.getElementById('other-file-input') as HTMLInputElement
 
   if (input) input.value = ''
 }
@@ -1331,7 +1331,13 @@ const removeDetailRow = (index: number) => {
   }
 }
 
-const handleSaveDraft = () => console.log('保存草稿', orderData)
+const handleSaveDraft = () => {
+  if (!orderData.customer && !orderData.productName && !orderData.order_id) {
+    alert('请先填写订单内容再保存草稿')
+    return
+  }
+  emit('save-draft', orderData)
+}
 
 const handleClose = () => {
   if (confirm('确定退出？')) emit('close')

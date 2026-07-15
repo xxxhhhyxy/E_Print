@@ -146,9 +146,13 @@ import request, {
   ChangeOrderStatusTo,
   FindOrdersByAudit,
   FindOrdersWithStatus,
+  FindWorkOrderByID,
 } from '@/stores/request'
 import OrderInfo, { PageMode } from './OrderInfo.vue' // 确保能拿到导出的 PageMode
-import { prepareWorkOrderForSubmit, WorkOrderStatus, type IWorkOrder } from '@/types/WorkOrder'
+import { prepareWorkOrderForSubmit, WorkOrderStatus, type IWorkOrder, type IIM } from '@/types/WorkOrder'
+import { useUserStore } from '@/stores/userStore'
+
+const userStore = useUserStore()
 const activeMode = computed(() => {
   // 如果当前在“未审核”标签，则进入“审核模式”，否则仅为“查看模式”
   return currentTab.value === 'PENDING' ? PageMode.REVIEW : PageMode.VIEW
@@ -225,16 +229,45 @@ const sortConfig = ref<{ key: SortKey; order: 'asc' | 'desc' }>({
 //   auditLogs: [],
 //   attachments: [],
 // })
+/** 将订单产品明细行映射为工程单工序行（IIM），未知的生产字段初始化为空/0 */
+const productToIIM = (p: NonNullable<IOrder['chanPinMingXi']>[number], index: number): IIM => ({
+  intermediaID: index,
+  buJianMingCheng: p.neiWen || '',
+  yinShuaYanSe: [p.yinSe, p.zhuanSe].filter((s) => s && s !== '/').join(' 专色:') || p.yinSe || '',
+  wuLiaoMingCheng: p.zhiLei || '',
+  pinPai: p.pinPai || '',
+  caiLiaoGuiGe: [p.keZhong ? `${p.keZhong}g` : '', p.yongZhiChiCun || ''].filter(Boolean).join(' '),
+  FSC: p.FSC || '',
+  kaiShu: 0,
+  shangJiChiCun: '',
+  paiBanMuShu: 0,
+  yinChuShu: 0,
+  yinSun: 0,
+  lingLiaoShu: 0,
+  biaoMianChuLi: p.biaoMianChuLi || '',
+  yinShuaBanShu: 0,
+  shengChanLuJing: '',
+  paiBanFangShi: '',
+
+  // IIM 生产/采购追踪字段
+  yiGouJianShu: 0,
+  head_PUR: '',
+  kaiShiRiQi: '',
+  yuQiJieShu: '',
+  dangQianJinDu: 0,
+  head_OUT: '',
+})
+
 const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
   // --- 接口定义的顺序 ---
   work_id: sourceOrder.order_id + '_W',
   work_ver: sourceOrder.order_ver || 1,
   work_unique: sourceOrder.order_id + '_W_' + sourceOrder.order_ver,
-  work_clerk: 'admin', // 默认制单员
+  work_clerk: useUserStore().userName, // 制单员 = 当前操作人
   clerkDate: formatYMD(new Date()), // 工程单提交日期
   work_audit: '',
   auditDate: '',
-  gongDanLeiXing: '',
+  gongDanLeiXing: sourceOrder.chanPinDaLei || '',
   caiLiao: '',
   chanPinLeiXing: '',
   zhiDanShiJian: formatFullTime(new Date()),
@@ -251,36 +284,11 @@ const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
   chuYangRiqiRequired: sourceOrder.chuyangRiqiRequired || '',
   chuHuoRiqiRequired: sourceOrder.chuHuoRiqiRequired || '',
 
-  // 3. 中间物料详单 (IIM) 数组初始化
-  intermedia: [
-    {
-      intermediaID: 0, // 初始序号
-      buJianMingCheng: '',
-      yinShuaYanSe: '',
-      wuLiaoMingCheng: '',
-      pinPai: '',
-      caiLiaoGuiGe: '',
-      FSC: '',
-      kaiShu: 0,
-      shangJiChiCun: '',
-      paiBanMuShu: 0,
-      yinChuShu: 0,
-      yinSun: 0,
-      lingLiaoShu: 0,
-      biaoMianChuLi: '',
-      yinShuaBanShu: 0,
-      shengChanLuJing: '',
-      paiBanFangShi: '',
-
-      // IIM 生产/采购追踪字段
-      yiGouJianShu: 0,
-      head_PUR: '',
-      kaiShiRiQi: '',
-      yuQiJieShu: '',
-      dangQianJinDu: 0,
-      head_OUT: '',
-    },
-  ],
+  // 3. 中间物料详单 (IIM)：从订单产品明细映射，明细为空时保留一行空模板兜底
+  intermedia:
+    sourceOrder.chanPinMingXi && sourceOrder.chanPinMingXi.length > 0
+      ? sourceOrder.chanPinMingXi.map(productToIIM)
+      : [productToIIM({}, 0)],
 
   // 4. 生产进度与系统状态
   workorderstatus: WorkOrderStatus.DRAFT,
@@ -297,42 +305,56 @@ const createWorkOrderFromOrder = (sourceOrder: IOrder): IWorkOrder => ({
 
 const handleApprove = async (curOrder: IOrder, curComment: string) => {
   console.log('正在处理审核通过并保存数据...')
-  if (isUploading.value) return
-  isUploading.value = true
-
-  //if (!selectedOrder.value) return
-
-  const newWorkOrder = reactive<IWorkOrder>(createWorkOrderFromOrder(curOrder) as IWorkOrder)
-  curOrder.orderstatus = OrderStatus.APPROVED
-
-  const fd = prepareWorkOrderForSubmit(newWorkOrder)
-
-  // 关键点：先把 ID 存起来，防止在 await 期间 selectedOrder 被意外清空
+  // 校验放在加锁之前，任何提前 return 都不会把 isUploading 卡死
   const targetId = curOrder.order_unique
   if (!targetId) {
     alert('订单唯一标识缺失，无法更新状态')
     return
   }
+  if (isUploading.value) return
+  isUploading.value = true
+
+  const operator = userStore.userName
 
   try {
+    const newWorkOrder = reactive<IWorkOrder>(createWorkOrderFromOrder(curOrder) as IWorkOrder)
+    curOrder.orderstatus = OrderStatus.APPROVED
+
+    // 重审场景：检查同标识工程单是否已存在，决定"刷新草稿"还是"创建新版本"
+    const existingWork = await FindWorkOrderByID(newWorkOrder.work_unique).catch(() => null)
+    let versionBumped = false
+    if (existingWork && existingWork.work_unique) {
+      if (existingWork.workorderstatus === WorkOrderStatus.IN_PRODUCTION) {
+        // 已投产：不覆盖进度，创建新版本工程单
+        newWorkOrder.work_ver = (existingWork.work_ver || 1) + 1
+        newWorkOrder.work_unique = newWorkOrder.work_id + '_' + newWorkOrder.work_ver
+        versionBumped = true
+      }
+      // 草稿/待审核/驳回：沿用同标识，用新订单数据重建（后端覆盖）
+    }
+
+    const fd = prepareWorkOrderForSubmit(newWorkOrder)
     await request.post('/workOrders/create', fd)
-    alert('工程单已成功创建！')
-    //showCreator.value = false
+    alert(
+      versionBumped
+        ? `原工程单已在生产中，已生成新版本工程单 v${newWorkOrder.work_ver}，旧版本进度保留`
+        : '工程单已成功创建！',
+    )
 
     await ChangeOrderStatusTo(targetId, OrderStatus.APPROVED)
 
-    await AddOrderAuditInfo(targetId, 'admin', formatYMD(new Date()))
+    await AddOrderAuditInfo(targetId, operator, formatYMD(new Date()))
     const tempLog = (): orderlog => ({
       time: formatFullTime(new Date()),
-      operator: 'admin',
+      operator: operator,
       action: 'approve',
       comment: curComment,
     })
     await AddOrderAuditLog(targetId, tempLog())
-    fetchOrdersData() // 这里可以刷新列表
   } catch (err) {
     console.error('后端响应错误:', err)
-    alert('发送失败，请检查网络或后端服务')
+    const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+    alert(msg ? `审核失败：${msg}` : '发送失败，请检查网络或后端服务')
   } finally {
     isUploading.value = false
   }
@@ -352,13 +374,15 @@ const handleReject = async (curOrder: IOrder, curComment: string) => {
     alert('订单唯一标识缺失，无法更新状态')
     return
   }
+  isUploading.value = true
 
+  const operator = userStore.userName
   try {
     await ChangeOrderStatusTo(targetId, OrderStatus.REJECTED)
-    await AddOrderAuditInfo(targetId, 'admin', formatYMD(new Date()))
+    await AddOrderAuditInfo(targetId, operator, formatYMD(new Date()))
     const tempLog = (): orderlog => ({
       time: formatFullTime(new Date()),
-      operator: 'admin',
+      operator: operator,
       action: 'reject',
       comment: curComment,
     })
@@ -366,6 +390,8 @@ const handleReject = async (curOrder: IOrder, curComment: string) => {
   } catch (err) {
     console.error('后端响应错误:', err)
     alert('发送失败，请检查网络或后端服务')
+  } finally {
+    isUploading.value = false
   }
   selectedOrder.value = null
   await fetchOrdersData()
@@ -391,8 +417,8 @@ const fetchOrdersData = async () => {
     const pendingData = await FindOrdersWithStatus(OrderStatus.PENDING_REVIEW)
     pendingOrdersSource.value = pendingData
 
-    // 逻辑 B: 获取 admin 已经处理过的订单历史
-    const reviewedData = await FindOrdersByAudit('admin')
+    // 逻辑 B: 获取当前审核员已经处理过的订单历史
+    const reviewedData = await FindOrdersByAudit(userStore.userName)
     reviewedOrdersSource.value = reviewedData
 
     console.log('数据同步完成：待审', pendingData.length, '条，已审', reviewedData.length, '条')
@@ -402,11 +428,6 @@ const fetchOrdersData = async () => {
 }
 
 // --- 3. 核心计算属性：处理展示逻辑 ---
-
-const getFirstAuditTime = (order: IOrder): string => {
-  // 如果 logs[0] 存在则取 time，否则返回 '-'
-  return order.auditLogs?.[0]?.time ?? '-'
-}
 
 /**
  * 根据当前选中的 Tab，决定对哪一个数组进行“搜索”和“排序”
@@ -439,8 +460,9 @@ const processedOrders = computed<IOrder[]>(() => {
     let valB: string | number | boolean = ''
 
     if (key === 'submitTime') {
-      valA = getFirstAuditTime(a)
-      valB = getFirstAuditTime(b)
+      // 与"提交时间"列显示的 salesDate 保持一致（此前用 auditLogs[0].time 排序，排序与显示不一致）
+      valA = a.salesDate || ''
+      valB = b.salesDate || ''
     } else {
       /**
        * 核心修复：使用 keyof IOrder 配合索引访问

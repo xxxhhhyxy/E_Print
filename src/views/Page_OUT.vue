@@ -210,13 +210,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   AddHead_Out,
   FindWorkOrdersWithStatus,
   UpdateProgress_Mnf,
   UpdateProgress_Out,
 } from '@/stores/request'
+import { useUserStore } from '@/stores/userStore'
 import {
   calculateTimeProgress,
   formatYMD,
@@ -238,7 +239,8 @@ const pendingTasks = ref<IOutTask[]>([])
 const activeTasks = ref<IOutTask[]>([])
 const isLoading = ref(false)
 const currentTab = ref<'pending' | 'active'>('pending') // 默认显示待领取
-const currentUser = ref({ name: 'admin' })
+const userStore = useUserStore()
+const currentUser = computed(() => ({ name: userStore.userName }))
 
 // 获取数据逻辑 (保持不变)
 // 2. 修改获取数据逻辑
@@ -256,10 +258,9 @@ const fetchOrders = async () => {
     data.forEach((work) => {
       if (work.intermedia && work.intermedia.length > 0) {
         work.intermedia.forEach((im) => {
-          // 筛选条件：进度 < 100 (因为 >=100 通常代表已完成，外发部不再处理)
-          // 注意：根据你的描述“dangQianJinDu < 100”才需要被处理
-          // if ((im.dangQianJinDu || 0) < 100)
-          if ((im.yiGouJianShu || 0) >= (im.lingLiaoShu || 0)) {
+          // 采购完成才流入外发：领料数必须大于 0（与 Page_PUR 的"已完成"判定保持一致，
+          // 否则空工序 0>=0 会被误判为采购完成）
+          if ((im.lingLiaoShu || 0) > 0 && (im.yiGouJianShu || 0) >= (im.lingLiaoShu || 0)) {
             const taskPayload: IOutTask = {
               workOrder: work,
               item: im,

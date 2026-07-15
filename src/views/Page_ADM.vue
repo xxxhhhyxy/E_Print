@@ -42,9 +42,15 @@
                 查看工单
               </button>
             </td>
-            <td class="status-empty">--</td>
-            <td class="status-empty">--</td>
-            <td class="status-empty">--</td>
+            <td :class="{ 'status-empty': getProgress(inputID).pur === '--' }">
+              {{ getProgress(inputID).pur }}
+            </td>
+            <td :class="{ 'status-empty': getProgress(inputID).out === '--' }">
+              {{ getProgress(inputID).out }}
+            </td>
+            <td :class="{ 'status-empty': getProgress(inputID).mnf === '--' }">
+              {{ getProgress(inputID).mnf }}
+            </td>
           </tr>
           <tr v-if="Object.keys(groupedOrders).length === 0">
             <td colspan="9" class="no-data">暂无匹配的订单数据</td>
@@ -92,8 +98,8 @@ import { ref, onMounted, computed } from 'vue'
 import WorkOrderInfo, { PageMode as WorkPageMode } from './WorkOrderInfo.vue'
 import OrderInfo, { PageMode as OrderPageMode } from './OrderInfo.vue'
 import { OrderStatus, type IOrder } from '@/types/Order'
-import { FindOrdersWithStatus, FindWorkOrderByID } from '@/stores/request'
-import type { IWorkOrder } from '@/types/WorkOrder'
+import { FindOrdersWithStatus, FindWorkOrderByID, FindWorkOrdersWithStatus } from '@/stores/request'
+import { WorkOrderStatus, type IWorkOrder } from '@/types/WorkOrder'
 import OrderCoordinator from './OrderCoordinator.vue'
 
 // 状态
@@ -113,16 +119,48 @@ onMounted(async () => {
   await fetchApprovedOrders()
 })
 
+const workOrders = ref<IWorkOrder[]>([])
+
 async function fetchApprovedOrders() {
   try {
     isLoading.value = true
-    const data = await FindOrdersWithStatus(OrderStatus.APPROVED)
+    const [data, works] = await Promise.all([
+      FindOrdersWithStatus(OrderStatus.APPROVED),
+      FindWorkOrdersWithStatus(WorkOrderStatus.IN_PRODUCTION),
+    ])
     orders.value = data
+    workOrders.value = works
   } catch (error) {
     console.error('加载失败:', error)
   } finally {
     isLoading.value = false
   }
+}
+
+/**
+ * 三部门进度：按订单号匹配生产中的工程单（work_id = order_id + '_W'）
+ * 采购 = Σ已购/Σ领料；外发 = 各工序 dangQianJinDu 的最小值；生产 = 装订数/订单数
+ */
+const getProgress = (orderId: string): { pur: string; out: string; mnf: string } => {
+  // 同一订单可能有多个版本工程单（重审升版），取版本号最大的
+  const work = workOrders.value
+    .filter((w) => w.work_id === orderId + '_W')
+    .sort((a, b) => (b.work_ver || 0) - (a.work_ver || 0))[0]
+  if (!work || !work.intermedia || work.intermedia.length === 0) {
+    return { pur: '--', out: '--', mnf: '--' }
+  }
+  const clamp = (n: number) => Math.min(100, Math.max(0, Math.round(n)))
+
+  const totalRequired = work.intermedia.reduce((s, im) => s + (im.lingLiaoShu || 0), 0)
+  const totalPurchased = work.intermedia.reduce((s, im) => s + (im.yiGouJianShu || 0), 0)
+  const pur = totalRequired > 0 ? `${clamp((totalPurchased / totalRequired) * 100)}%` : '--'
+
+  const out = `${clamp(Math.min(...work.intermedia.map((im) => im.dangQianJinDu || 0)))}%`
+
+  const orderQty = work.dingDanShuLiang || 0
+  const mnf = orderQty > 0 ? `${clamp(((work.zhuangDingJianShu || 0) / orderQty) * 100)}%` : '--'
+
+  return { pur, out, mnf }
 }
 
 // 1. 过滤逻辑：匹配单号或客户
@@ -162,9 +200,18 @@ const openCoordinator = (id: string, group: IOrder[]) => {
 }
 
 const openWorkOrder = async (id: string, ver: number) => {
-  const tempWorkUnique = id + '_W_' + ver
-  selectedWork.value = await FindWorkOrderByID(tempWorkUnique)
-  showWorkModal.value = true
+  // 优先用已加载的最新版工程单（重审升版后 work_ver 可能大于 order_ver）
+  const latest = workOrders.value
+    .filter((w) => w.work_id === id + '_W')
+    .sort((a, b) => (b.work_ver || 0) - (a.work_ver || 0))[0]
+  const tempWorkUnique = latest ? latest.work_unique : id + '_W_' + ver
+  try {
+    selectedWork.value = await FindWorkOrderByID(tempWorkUnique)
+    showWorkModal.value = true
+  } catch (err) {
+    console.error('查询工单失败:', err)
+    alert('未找到对应的工程单')
+  }
 }
 </script>
 

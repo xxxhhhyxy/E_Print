@@ -183,11 +183,18 @@ const syncPurProgress = async (work: IWorkOrder, item: IIMExtended, idx: number)
     return
   }
   try {
+    const required = item.lingLiaoShu || 0
+    const prevQty = item.lastSyncedQty || 0
+
     await UpdateProgress_Pur(work.work_unique, idx, newQty)
     // 同步成功后，更新该行的 lastSyncedQty，使按钮重新变回失活状态
     item.lastSyncedQty = newQty
 
-    if ((item.yiGouJianShu || 0) >= (item.lingLiaoShu || 0)) {
+    // 仅在"首次跨过完成线"时播种外发任务，且外发部尚未开始时才写入，
+    // 防止重复同步把外发部已填的进度/日期清零
+    const crossedNow = required > 0 && prevQty < required && newQty >= required
+    const outNotStarted = !(item.dangQianJinDu && item.dangQianJinDu > 0) && !item.kaiShiRiQi
+    if (crossedNow && outNotStarted) {
       await UpdateProgress_Out(
         work.work_unique,
         idx,

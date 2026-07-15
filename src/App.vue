@@ -1,27 +1,48 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { computed, reactive } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
 
-// --- 登录状态管理 ---
-const isLoggedIn = ref(false)
+// --- 登录状态管理（持久化在 userStore / localStorage）---
+const userStore = useUserStore()
+const isLoggedIn = computed(() => userStore.isLoggedIn)
+
+const REMEMBER_KEY = 'eprint_remembered_login'
+
+// 记住密码：初始化时回填上次保存的表单
+const remembered = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(REMEMBER_KEY) || 'null')
+  } catch {
+    return null
+  }
+})()
+
 const loginForm = reactive({
-  username: '',
-  password: '',
-  rememberMe: false,
+  username: remembered?.username || '',
+  password: remembered?.password || '',
+  rememberMe: !!remembered,
 })
 
 const handleLogin = () => {
   if (loginForm.username && loginForm.password) {
     // 这里可以添加真实的 API 验证逻辑
-    console.log('登录中...', loginForm)
-    isLoggedIn.value = true
+    userStore.loginUser(loginForm.username)
+    if (loginForm.rememberMe) {
+      localStorage.setItem(
+        REMEMBER_KEY,
+        JSON.stringify({ username: loginForm.username, password: loginForm.password }),
+      )
+    } else {
+      localStorage.removeItem(REMEMBER_KEY)
+    }
   } else {
     alert('请输入用户名和密码')
   }
 }
 
 const handleLogout = () => {
-  isLoggedIn.value = false
+  userStore.logout()
 }
 </script>
 
@@ -76,7 +97,7 @@ const handleLogout = () => {
             <!-- <RouterLink to="/dispatch-center">派单中心</RouterLink> -->
           </div>
           <div class="nav-right">
-            <span class="user-info">管理员：{{ loginForm.username }}</span>
+            <span class="user-info">管理员：{{ userStore.userName }}</span>
             <button @click="handleLogout" class="logout-link">退出</button>
           </div>
         </nav>

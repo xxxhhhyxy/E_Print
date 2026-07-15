@@ -172,21 +172,9 @@
             </td>
             <td colspan="11" class="progress-td">
               <div class="progress-track">
-                <div
-                  class="bar-fill purchase-flow"
-                  :style="{
-                    width:
-                      Math.min(
-                        100,
-                        Math.max(0, ((item.yiGouJianShu || 0) / (item.lingLiaoShu || 1)) * 100),
-                      ) + '%',
-                  }"
-                >
-                  <span
-                    v-if="(item.yiGouJianShu || 0) / (item.lingLiaoShu || 1) > 0.05"
-                    class="bar-label"
-                  >
-                    {{ ((item.yiGouJianShu || 0) / (item.lingLiaoShu || 1)) * 100 }}%
+                <div class="bar-fill purchase-flow" :style="{ width: purPercent(item) + '%' }">
+                  <span v-if="purPercent(item) > 5" class="bar-label">
+                    {{ purPercent(item) }}%
                   </span>
                 </div>
               </div>
@@ -389,6 +377,13 @@ import {
   type IIM,
   type IWorkOrder,
 } from '@/types/WorkOrder'
+
+/** 采购进度百分比：0-100 取整；领料数为 0 时视为 0%（避免除零导致 10000% 溢出） */
+const purPercent = (item: IIM): number => {
+  const total = item.lingLiaoShu || 0
+  if (total <= 0) return 0
+  return Math.min(100, Math.max(0, Math.round(((item.yiGouJianShu || 0) / total) * 100)))
+}
 import {
   FindWorkOrderByID,
   UpdateProgress_Mnf,

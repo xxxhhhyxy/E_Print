@@ -187,6 +187,7 @@
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { AddHead_Mnf, FindWorkOrdersWithStatus, UpdateProgress_Mnf } from '@/stores/request'
+import { useUserStore } from '@/stores/userStore'
 import {
   calculateTimeProgress,
   getTaskStatus_Mnf,
@@ -203,9 +204,9 @@ const orderList = ref<IWorkOrderExtended[]>([])
 const isLoading = ref(false)
 const currentTab = ref<'pending' | 'active'>('pending') // 默认显示未领取
 
-// 逻辑过滤：根据 head_MNF 是否存在来区分领取状态
+// 逻辑过滤：待领取 = 无人认领；已领取 = 当前用户认领的（不显示别人的任务）
 const pendingTasks = computed(() => orderList.value.filter((o) => !o.head_MNF))
-const activeTasks = computed(() => orderList.value.filter((o) => !!o.head_MNF))
+const activeTasks = computed(() => orderList.value.filter((o) => o.head_MNF === currentUser.value.name))
 
 const hasUnsavedChanges = computed(() => {
   return activeTasks.value.some((order) => order.zhuangDingJianShu !== order.lastSyncedQty)
@@ -246,7 +247,8 @@ const fetchOrders = async () => {
   }
 }
 
-const currentUser = ref({ name: 'admin' })
+const userStore = useUserStore()
+const currentUser = computed(() => ({ name: userStore.userName }))
 // 认领函数
 const takeTask_Mnf = async (order: IWorkOrderExtended) => {
   if (order.head_MNF) return
@@ -256,14 +258,14 @@ const takeTask_Mnf = async (order: IWorkOrderExtended) => {
 
   try {
     await AddHead_Mnf(order.work_unique, currentUser.value.name)
+    // 本地即时更新 + 重新拉取，认领后任务立刻进入"已领取"标签（无需手动刷新）
+    order.head_MNF = currentUser.value.name
+    await fetchOrders()
     console.log('认领成功，负责人已变更为:', currentUser.value.name)
   } catch (error) {
     console.error('认领失败:', error)
     alert('认领失败，请稍后重试')
   }
-
-  console.log('认领工单:', order.work_unique)
-  // 此处后续编写你的认领逻辑，例如调用接口更新 head_MNF
 }
 
 const syncMnfProgress = async (order: IWorkOrderExtended) => {

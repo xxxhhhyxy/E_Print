@@ -339,11 +339,8 @@
       </table>
       <!-- </fieldset> -->
 
-      <fieldset
-        :disabled="props.mode !== PageMode.REVIEW"
-        v-if="props.mode !== PageMode.EDIT"
-        class="audit-section"
-      >
+      <!-- 审核决策只在审核模式渲染，避免查看/生产模式出现永久禁用的死按钮 -->
+      <fieldset v-if="props.mode === PageMode.REVIEW" class="audit-section">
         <div class="section-label" style="margin-bottom: 10px">审核决策</div>
         <table class="production-table audit-table">
           <tbody>
@@ -547,15 +544,20 @@ async function ParseOrderFile() {
     const formData = new FormData()
     formData.append('file', mainFile.file)
 
-    // 调用你后端的解析接口，此处需确保接口支持 WorkOrder 的解析
-    const response = await fetch('/api/workorder/parse-pdf', {
+    // 调用本地解析服务的工程单接口（与订单解析同一 Flask 服务，8000 端口）
+    const response = await fetch('http://localhost:8000/api/workorder/parse-pdf', {
       method: 'POST',
       body: formData,
     })
 
-    if (!response.ok) throw new Error('解析失败')
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`解析失败(${response.status}): ${errorText}`)
+    }
 
-    const result: IWorkOrder = await response.json()
+    const raw = await response.json()
+    // 兼容 { data: {...} } 与直接对象两种返回格式（对齐 parsePdfService 的解包逻辑）
+    const result: Partial<IWorkOrder> = raw.data ? raw.data : raw
 
     // 覆盖数据：将解析结果合并到当前响应式对象中
     Object.assign(WorkOrderData, result)
@@ -597,63 +599,25 @@ const handleSubmitOrder = async () => {
 
 const handleApprove = () => {
   if (!auditRemark.value.trim()) {
-    alert('拒绝订单时请填写审核意见')
+    alert('通过工程单前请填写审核意见')
     return
   }
 
   if (!confirm(`确定要通过该工程单吗？`)) return
 
-  try {
-    // 构造审核数据
-    const auditPayload = {
-      orderId: WorkOrderData.work_unique,
-      passed: true,
-      remark: auditRemark.value,
-      auditor: 'admin', // 或者当前登录用户
-    }
-
-    // 调用后端接口（示例路径）
-    // await request.post('/orders/audit', auditPayload)
-
-    console.log('提交审核结果:', auditPayload)
-    alert(`订单已通过`)
-
-    // if (isPass) {
-
-    //const newWorkOrder = reactive<IWorkOrder>(createWorkOrderFromOrder(orderData) as IWorkOrder)
-    //const fd = prepareWorkOrderForSubmit(WorkOrderData)
-    emit('approve', WorkOrderData, auditRemark.value)
-    // } else {
-    //   emit('reject')
-    // }
-    emit('close')
-  } catch (err) {
-    console.error('审核操作失败', err)
-    alert('操作失败，请重试')
-  }
+  alert(`工程单已通过`)
+  emit('approve', WorkOrderData, auditRemark.value)
+  emit('close')
 }
 
 const handleReject = () => {
   if (!auditRemark.value.trim()) {
-    alert('拒绝订单时请填写审核意见')
+    alert('驳回工程单时请填写审核意见')
     return
   }
   if (!confirm(`确定要驳回该工程单吗？`)) return
-  try {
-    // 构造审核数据
-    const auditPayload = {
-      orderId: WorkOrderData.work_unique,
-      passed: false,
-      remark: auditRemark.value,
-      auditor: 'admin', // 或者当前登录用户
-    }
-
-    emit('reject', WorkOrderData, auditRemark.value)
-    emit('close')
-  } catch (err) {
-    console.error('审核操作失败', err)
-    alert('操作失败，请重试')
-  }
+  emit('reject', WorkOrderData, auditRemark.value)
+  emit('close')
 }
 </script>
 
